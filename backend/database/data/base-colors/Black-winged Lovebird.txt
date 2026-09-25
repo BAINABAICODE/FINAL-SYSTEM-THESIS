@@ -1,0 +1,27 @@
+Black-winged Lovebird
+
+CREATE TABLE taranta_base_colors (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  species VARCHAR(64) NOT NULL DEFAULT 'Agapornis taranta',
+  series VARCHAR(64) NOT NULL,
+  base_color VARCHAR(64) NOT NULL,
+  sf VARCHAR(255) NOT NULL,
+  df VARCHAR(255) NOT NULL,
+  allele VARCHAR(255) NOT NULL,
+  genotype VARCHAR(255) NOT NULL,
+  genetic_code VARCHAR(64) NOT NULL,
+  inheritance_type VARCHAR(80) NOT NULL,
+  phenotype TEXT NOT NULL,
+  scientific_source VARCHAR(255) NOT NULL,
+  verification_status VARCHAR(64) NOT NULL,
+  computable TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_species_color (species, base_color)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO taranta_base_colors
+  (series, base_color, sf, df, allele, genotype, genetic_code, inheritance_type, phenotype, scientific_source, verification_status, computable)
+VALUES
+('Green', 'Green', 'Not applicable. Normal form, 0 dark factor.', 'Not applicable.', 'bl+ ; D+', 'bl+_D+ / bl+_D+', 'bl+/bl+|D+/D+', 'Wild type', 'Native ancestral green. Male has a dull red forehead; female head is green. Black flights.', 'AGASSCOM Group 6 AGSC 6.1.00 male and 6.1.01 female', 'Verified', 1),
+('Green', 'Dark Green', 'Yes. One D. This name is D green. Cannot be split.', 'Not applicable. Two D is Olive.', 'bl+ ; one D. No Dark Green allele.', 'bl+_D / bl+_D+', 'bl+/bl+|D+/D', 'Incomplete dominant', 'Display name kept. International class is D green. Dark factor in this species is an original captive mutation.', 'Birdkeeper.dk; MUTAVI', 'Verified — terminology alias', 1),
+('Green', 'Olive', 'Not applicable. One D is Dark Green.', 'Yes. Two D. This name is DD green.', 'bl+ ; two D. No olive allele.', 'bl+_D / bl+_D', 'bl+/bl+|D/D', 'Incomplete dominant', 'Display name kept. International class is DD green. Not an independent mutation.', 'Birdkeeper.dk; MUTAVI', 'Verified — terminology alias', 1);

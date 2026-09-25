@@ -1,0 +1,35 @@
+Black-cheeked Lovebird split-gene
+
+CREATE TABLE nigrigenis_split_genes (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  species VARCHAR(64) NOT NULL DEFAULT 'Agapornis nigrigenis',
+  split_gene VARCHAR(64) NOT NULL,
+  genetic_symbol VARCHAR(32) NOT NULL,
+  wild_type_allele VARCHAR(32) NOT NULL,
+  mutant_allele VARCHAR(32) NOT NULL,
+  inheritance_type VARCHAR(80) NOT NULL,
+  genetic_category VARCHAR(64) NOT NULL,
+  cock_can_split TINYINT(1) NOT NULL,
+  hen_can_split TINYINT(1) NOT NULL,
+  heterozygous_genotype VARCHAR(64) NOT NULL,
+  homozygous_genotype VARCHAR(128) NOT NULL,
+  genetic_code VARCHAR(64) NOT NULL,
+  phenotype_when_visual VARCHAR(64) NOT NULL,
+  description TEXT NOT NULL,
+  scientific_source VARCHAR(255) NOT NULL,
+  verification_status VARCHAR(64) NOT NULL,
+  computable TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_species_split (species, split_gene)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO nigrigenis_split_genes
+  (split_gene, genetic_symbol, wild_type_allele, mutant_allele, inheritance_type, genetic_category, cock_can_split, hen_can_split, heterozygous_genotype, homozygous_genotype, genetic_code, phenotype_when_visual, description, scientific_source, verification_status, computable)
+VALUES
+('Split Blue', 'bl', 'bl+', 'bl', 'Autosomal recessive', 'Base-color locus bl', 1, 1, 'bl+/bl', 'bl/bl', 'bl+/bl', 'Blue', 'One bl is hidden. The split bird looks green. Stored transgenic blue. Do not use aq, bl1, or bl2 as a separate hidden gene.', 'Stored A. nigrigenis base color, transgenic bl; AGASSCOM symbol bl', 'Verified — introgressed', 1),
+('Split NSL Ino', 'a', 'a+', 'a', 'Autosomal recessive', 'a locus', 1, 1, 'a+/a', 'a/a', 'a+/a', 'NSL Ino, called lutino on green', 'One a is hidden. Albino is this allele on blue, not a hidden gene. A bird can carry only two alleles of locus a.', 'MUTAVI 17 Aug 2025, NSL ino GI in A. nigrigenis; symbol a', 'Verified — introgressed', 1),
+('Split Dark Eyed Clear', 'a*dec', 'a+', 'a*dec', 'Autosomal recessive', 'a locus', 1, 1, 'a+/a*dec', 'a*dec/a*dec', 'a+/a*dec', 'Dark Eyed Clear', 'One a*dec is hidden. a/a*dec is visual decino, not two splits.', 'MUTAVI, dark eyed clear GI in A. nigrigenis; symbol a*dec', 'Verified — introgressed', 1),
+('Split Pastel', 'a*pa', 'a+', 'a*pa', 'Autosomal recessive', 'a locus', 1, 1, 'a+/a*pa', 'a*pa/a*pa', 'a+/a*pa', 'Pastel', 'One a*pa is hidden. Not dilute. a/a*pa is visual pastelino, not two splits.', 'MUTAVI, pastel GI in A. nigrigenis; symbol a*pa', 'Verified — introgressed', 1),
+('Split Dilute', 'dil', 'dil+', 'dil', 'Autosomal recessive', 'Eumelanin distribution', 1, 1, 'dil+/dil', 'dil/dil', 'dil+/dil', 'Dilute', 'One dil is hidden. Not pastel.', 'AGASSCOM Group 4 dilute factor; NBVV dilute class; symbol dil', 'Verified', 1),
+('Split Recessive Pied', 's', 's+', 's', 'Autosomal recessive', 'Pied', 1, 1, 's+/s', 's/s', 's+/s', 'Recessive Pied', 'One s is hidden. Dominant pied cannot be split.', 'MUTAVI, recessive pied GI in A. nigrigenis; symbol s', 'Verified — introgressed', 1),
+('Split Opaline', 'op', 'op+', 'op', 'Sex-linked recessive', 'Z-linked distribution', 1, 0, 'op+/op cock', 'op/op cock; hen visual is op/W, not homozygous', 'op+/op', 'Opaline', 'Only a cock can hide op. A hen with op on her single Z is visual. Cinnamon is not stored for this species.', 'AGASSCOM Group 4 transgenic opaline; symbol op', 'Verified — introgressed', 1);

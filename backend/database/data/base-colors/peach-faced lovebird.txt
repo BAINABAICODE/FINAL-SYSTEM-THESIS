@@ -1,0 +1,32 @@
+CREATE TABLE pfl_base_colors (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  species VARCHAR(64) NOT NULL DEFAULT 'Agapornis roseicollis',
+  series VARCHAR(64) NOT NULL,
+  base_color VARCHAR(64) NOT NULL,
+  sf VARCHAR(255) NOT NULL,
+  df VARCHAR(255) NOT NULL,
+  allele VARCHAR(255) NOT NULL,
+  genotype VARCHAR(255) NOT NULL,
+  genetic_code VARCHAR(64) NOT NULL,
+  inheritance_type VARCHAR(64) NOT NULL,
+  phenotype TEXT NOT NULL,
+  scientific_source VARCHAR(255) NOT NULL,
+  verification_status VARCHAR(64) NOT NULL,
+  computable TINYINT(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_species_code (species, genetic_code, base_color)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO pfl_base_colors
+  (series, base_color, sf, df, allele, genotype, genetic_code, inheritance_type, phenotype, scientific_source, verification_status, computable)
+VALUES
+('Green', 'Green', 'Not applicable. Normal form, 0 dark factor.', 'Not applicable.', 'bl+ ; D+', 'bl+_D+ / bl+_D+', 'bl+/bl+|D+/D+', 'Wild type', 'Genetic default. Grass-green body, peach mask, sky-blue rump.', 'MUTAVI Mutabase, A. roseicollis wild type bl+ ; D+', 'Verified', 1),
+('Green', 'Dark Green', 'Yes. One dark factor. Cannot be split.', 'Not applicable. Two D is Olive.', 'bl+ ; one D. Not a separate allele.', 'bl+_D / bl+_D+', 'bl+/bl+|D+/D', 'Incomplete dominant', 'Green with one dark factor. Club name D green.', 'MUTAVI incomplete-dominant dark factor D', 'Verified — terminology alias', 1),
+('Green', 'Olive', 'Not applicable.', 'Yes. Two dark factors on green.', 'bl+ ; two D. Not a separate allele.', 'bl+_D / bl+_D', 'bl+/bl+|D/D', 'Incomplete dominant', 'Green with two dark factors. Club name DD green.', 'MUTAVI incomplete-dominant dark factor D', 'Verified — terminology alias', 1),
+('Aqua', 'Aqua', 'Not applicable. Split aqua is visual Green.', 'Not applicable for dark factor. Homozygous aqua, 0 D.', 'blaq', 'bl*aq_D+ / bl*aq_D+', 'blaq/blaq|D+/D+', 'Autosomal recessive', 'Homozygous aqua. About 50% even psittacin reduction.', 'MUTAVI aqua autosomal recessive; symbol bl*aq', 'Verified', 1),
+('Aqua', 'Dark Aqua', 'Yes, as D aqua.', 'Not applicable.', 'blaq plus one D. Not a separate allele.', 'bl*aq_D / bl*aq_D+', 'blaq/blaq|D+/D', 'Incomplete dominant', 'Requested name kept. Verified identity is D aqua.', 'MUTAVI aqua + dark factor D', 'Verified — terminology alias', 1),
+('Aqua', 'Olive Aqua', 'Not applicable.', 'Yes, as DD aqua.', 'blaq plus two D. Not a separate allele.', 'bl*aq_D / bl*aq_D', 'blaq/blaq|D/D', 'Incomplete dominant', 'Requested name kept. Verified identity is DD aqua.', 'MUTAVI aqua + dark factor D', 'Verified — terminology alias', 1),
+('Turquoise', 'Turquoise', 'Not applicable. Split turquoise is visual Green.', 'Not applicable for dark factor. Homozygous turquoise, 0 D.', 'bltq', 'bl*tq_D+ / bl*tq_D+', 'bltq/bltq|D+/D+', 'Autosomal recessive', 'Homozygous turquoise. Almost-blue body, green on the wings, cream mask.', 'MUTAVI turquoise autosomal recessive; symbol bl*tq', 'Verified', 1),
+('Turquoise (requested)', 'Cobalt', 'Not applicable. Not confirmed as D turquoise.', 'Not applicable.', 'No cobalt allele. Regional synonym of dark factor D.', 'Needs Verification. Not encoded as turquoise + D.', 'UNVERIFIED', 'Incomplete dominant', 'Dark-factor synonym, not a turquoise allele. Do not compute.', 'Club name only; not a verified turquoise allele', 'Needs Verification', 0),
+('Turquoise (requested)', 'Mauve', 'Not applicable.', 'Not applicable as DD turquoise.', 'No mauve allele. Regional synonym of dark factor D.', 'Needs Verification. Not encoded as turquoise + two D.', 'UNVERIFIED', 'Incomplete dominant', 'Dark-factor synonym, not a turquoise allele. Do not compute.', 'Club name only; not a verified turquoise allele', 'Needs Verification', 0),
+('AquaTurquoise / Seagreen', 'Seagreen', 'Not applicable. No split form.', 'Not applicable. Not homozygous for one allele.', 'blaq + bltq. No seagreen allele.', 'bl*aq_D+ / bl*tq_D+', 'blaq/bltq|D+/D+', 'Allelic compound', 'Requested name kept. Verified identity is AquaTurquoise.', 'MUTAVI bl locus aqua + turquoise compound', 'Verified — terminology alias', 1);

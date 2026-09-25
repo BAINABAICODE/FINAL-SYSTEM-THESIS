@@ -1,0 +1,24 @@
+Grey-headed Lovebird split-gene
+
+CREATE TABLE canus_split_genes (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  species VARCHAR(64) NOT NULL DEFAULT 'Agapornis canus',
+  split_gene VARCHAR(64) NOT NULL,
+  genetic_symbol VARCHAR(32) NOT NULL,
+  wild_type_allele VARCHAR(32) NOT NULL,
+  mutant_allele VARCHAR(32) NOT NULL,
+  inheritance_type VARCHAR(80) NOT NULL,
+  genetic_category VARCHAR(64) NOT NULL,
+  cock_can_split TINYINT(1) NOT NULL,
+  hen_can_split TINYINT(1) NOT NULL,
+  heterozygous_genotype VARCHAR(64) NOT NULL,
+  homozygous_genotype VARCHAR(128) NOT NULL,
+  genetic_code VARCHAR(64) NOT NULL,
+  phenotype_when_visual VARCHAR(64) NOT NULL,
+  description TEXT NOT NULL,
+  scientific_source VARCHAR(255) NOT NULL,
+  verification_status VARCHAR(64) NOT NULL,
+  computable TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_species_split (species, split_gene)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

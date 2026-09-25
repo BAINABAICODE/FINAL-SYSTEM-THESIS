@@ -1,0 +1,28 @@
+Black-winged Lovebird visual-mutation
+
+CREATE TABLE taranta_visual_mutations (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  species VARCHAR(64) NOT NULL DEFAULT 'Agapornis taranta',
+  series VARCHAR(64) NOT NULL,
+  mutation VARCHAR(64) NOT NULL,
+  sf VARCHAR(255) NOT NULL,
+  df VARCHAR(255) NOT NULL,
+  allele VARCHAR(255) NOT NULL,
+  genotype VARCHAR(255) NOT NULL,
+  genetic_code VARCHAR(64) NOT NULL,
+  inheritance_type VARCHAR(80) NOT NULL,
+  phenotype TEXT NOT NULL,
+  scientific_source VARCHAR(255) NOT NULL,
+  verification_status VARCHAR(64) NOT NULL,
+  computable TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_species_mutation (species, mutation)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO taranta_visual_mutations
+  (series, mutation, sf, df, allele, genotype, genetic_code, inheritance_type, phenotype, scientific_source, verification_status, computable)
+VALUES
+('Fallow', 'Bronze Fallow', 'Not applicable. A split bird looks wild type.', 'Not applicable. Not pale fallow and not dark factor.', 'a*bz. Autosomal. Symbol also written bz. Not an ino allele.', 'a*bz/a*bz', 'a*bz/a*bz', 'Autosomal recessive', 'Limited eumelanin reduction. Flight feathers brownish rather than black. Male red forehead is lighter. Dark red eyes. Originated in the Netherlands in the mid-1990s. Sex does not create a second allele.', 'MUTAVI Mutabase, bronze fallow in A. taranta; Birdkeeper.dk', 'Verified', 1),
+('Fallow', 'Pale Fallow', 'Not applicable. A split bird looks wild type.', 'Not applicable. Not bronze fallow and not lutino.', 'pf. Separate locus from bronze fallow.', 'pf/pf', 'pf/pf', 'Autosomal recessive', 'Strong eumelanin reduction, yellowish body, red eyes, pale feet. Not lutino. Originated with Wilhelm Schoon in Germany in 1999.', 'Birdkeeper.dk, pale fallow original in A. taranta; symbol pf', 'Verified', 1),
+('Incomplete dominant', 'Misty', 'Yes. One Mt. Cannot be split.', 'Not this row. Two Mt is Misty DF.', 'one Mt. Not dark factor D.', 'Mt/Mt+', 'Mt+/Mt', 'Incomplete dominant', 'Eumelanin is reduced, so the bird is lighter green than wild type. One Mt can be hard to separate from a dark wild-green bird. Originated in the Netherlands.', 'Birdkeeper.dk, misty incomplete dominant in A. taranta; symbol Mt', 'Verified — dosage', 1),
+('Incomplete dominant', 'Misty DF', 'Not this row. One Mt is Misty.', 'Yes. Two Mt. Same allele, second dose.', 'two Mt. No separate DF allele. Not olive and not two D.', 'Mt/Mt', 'Mt/Mt', 'Incomplete dominant', 'Same misty mutation, homozygous. Faded olive-green with a light brown wash. Do not store this as Olive.', 'Birdkeeper.dk, DF misty in A. taranta; symbol Mt', 'Verified — dosage', 1);

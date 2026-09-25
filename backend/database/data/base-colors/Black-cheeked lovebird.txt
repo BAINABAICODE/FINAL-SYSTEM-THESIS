@@ -1,0 +1,30 @@
+Black-cheeked lovebird
+
+CREATE TABLE nigrigenis_base_colors (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  species VARCHAR(64) NOT NULL DEFAULT 'Agapornis nigrigenis',
+  series VARCHAR(64) NOT NULL,
+  base_color VARCHAR(64) NOT NULL,
+  sf VARCHAR(255) NOT NULL,
+  df VARCHAR(255) NOT NULL,
+  allele VARCHAR(255) NOT NULL,
+  genotype VARCHAR(255) NOT NULL,
+  genetic_code VARCHAR(64) NOT NULL,
+  inheritance_type VARCHAR(80) NOT NULL,
+  phenotype TEXT NOT NULL,
+  verification_status VARCHAR(64) NOT NULL,
+  scientific_source VARCHAR(255) NOT NULL,
+  computable TINYINT(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_species_color (species, base_color)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO nigrigenis_base_colors
+  (series, base_color, sf, df, allele, genotype, genetic_code, inheritance_type, phenotype, verification_status, scientific_source, computable)
+VALUES
+('Green', 'Green', 'Not applicable. Normal form, 0 dark factor.', 'Not applicable.', 'bl+ ; D+', 'bl+_D+ / bl+_D+', 'bl+/bl+|D+/D+', 'Wild type', 'Native ancestral green. A split for blue still looks green.', 'Verified', 'AGASSCOM Group 4 AGSC 4.1.00', 1),
+('Green', 'Dark Green', 'Yes. One D. Cannot be split.', 'Not applicable. Two D is Olive.', 'bl+ ; one D. No Dark Green allele.', 'bl+_D / bl+_D+', 'bl+/bl+|D+/D', 'Intermediate dominant', 'Common name kept. Scientific class is green SF dark. Dark factor was transferred into this species.', 'Verified — terminology alias', 'AGASSCOM Group 4 AGSC 4.3.00', 1),
+('Green', 'Olive', 'Not applicable. One D is Dark Green.', 'Yes. Two D on green.', 'bl+ ; two D. No olive allele.', 'bl+_D / bl+_D', 'bl+/bl+|D/D', 'Intermediate dominant', 'Common name kept. Scientific class is green DF dark.', 'Verified — terminology alias', 'AGASSCOM Group 4 AGSC 4.3.01', 1),
+('Blue', 'Blue', 'Not applicable. Hidden blue is visual Green.', 'Not applicable. 0 dark factor.', 'bl. Do not use the conflicting symbol aq.', 'bl_D+ / bl_D+', 'bl/bl|D+/D+', 'Autosomal recessive', 'Blue ground color. Acquired by transmutation, not native.', 'Verified — transgenic', 'AGASSCOM Group 4 AGSC 4.2.00; MUTAVI', 1),
+('Blue', 'Blue SF Dark', 'Yes. One D on blue. Not a separate allele.', 'Not applicable. Two D is Blue DF Dark.', 'bl ; one D. No cobalt allele.', 'bl_D / bl_D+', 'bl/bl|D+/D', 'Intermediate dominant', 'Blue plus one dark factor. Both factors entered by transfer.', 'Verified — introgressed combination', 'AGASSCOM Group 4 AGSC 4.4.00', 1),
+('Blue', 'Blue DF Dark', 'Not applicable. One D is Blue SF Dark.', 'Yes. Two D on blue. Not a separate allele.', 'bl ; two D. No mauve allele.', 'bl_D / bl_D', 'bl/bl|D/D', 'Intermediate dominant', 'Blue plus two dark factors. Not a Mauve allele.', 'Verified — introgressed combination', 'AGASSCOM Group 4 AGSC 4.4.01', 1);

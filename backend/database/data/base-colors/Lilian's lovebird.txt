@@ -1,0 +1,30 @@
+Lilian's lovebird
+
+CREATE TABLE lilianae_base_colors (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  species VARCHAR(64) NOT NULL DEFAULT 'Agapornis lilianae',
+  series VARCHAR(64) NOT NULL,
+  base_color VARCHAR(64) NOT NULL,
+  sf VARCHAR(255) NOT NULL,
+  df VARCHAR(255) NOT NULL,
+  allele VARCHAR(255) NOT NULL,
+  genotype VARCHAR(255) NOT NULL,
+  genetic_code VARCHAR(64) NOT NULL,
+  inheritance_type VARCHAR(80) NOT NULL,
+  phenotype TEXT NOT NULL,
+  scientific_source VARCHAR(255) NOT NULL,
+  verification_status VARCHAR(64) NOT NULL,
+  computable TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_species_color (species, base_color)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO lilianae_base_colors
+  (series, base_color, sf, df, allele, genotype, genetic_code, inheritance_type, phenotype, scientific_source, verification_status, computable)
+VALUES
+('Green', 'Green', 'Not applicable. Normal form, 0 dark factor.', 'Not applicable.', 'bl+ ; D+', 'bl+_D+ / bl+_D+', 'bl+/bl+|D+/D+', 'Wild type', 'Native ancestral green. Orange-red face, bright green body. A split for blue still looks green.', 'AGASSCOM Group 5 AGSC 5.1.00', 'Verified', 1),
+('Green', 'Dark Green', 'Yes. One D. This name is green SF dark. Cannot be split.', 'Not applicable. Two D is Olive.', 'bl+ ; one D. No Dark Green allele.', 'bl+_D / bl+_D+', 'bl+/bl+|D+/D', 'Intermediate dominant', 'Display name kept. Scientific class is green SF dark. Dark factor was transferred into this species.', 'AGASSCOM Group 5 AGSC 5.3.00', 'Verified — terminology alias', 1),
+('Green', 'Olive', 'Not applicable. One D is Dark Green.', 'Yes. Two D. This name is green DF dark.', 'bl+ ; two D. No olive allele.', 'bl+_D / bl+_D', 'bl+/bl+|D/D', 'Intermediate dominant', 'Display name kept. Scientific class is green DF dark. Not an independent mutation.', 'AGASSCOM Group 5 AGSC 5.3.01', 'Verified — terminology alias', 1),
+('Blue', 'Blue', 'Not applicable. Hidden blue is visual Green.', 'Not applicable. 0 dark factor.', 'bl. Transgenic symbol bl.', 'bl_D+ / bl_D+', 'bl/bl|D+/D+', 'Autosomal recessive', 'Blue ground color. Acquired by transmutation, not native. Homozygous standard blue.', 'AGASSCOM Group 5 AGSC 5.2.00; MUTAVI', 'Verified — transgenic', 1),
+('Blue', 'Cobalt Blue', 'Yes. One D on blue. Not a cobalt allele.', 'Not applicable. Two D is Mauve Blue.', 'bl ; one D. No cobalt allele.', 'bl_D / bl_D+', 'bl/bl|D+/D', 'Intermediate dominant', 'Display name kept. Scientific class is blue SF dark. Blue and dark factor entered by transfer.', 'AGASSCOM Group 5 AGSC 5.4.00', 'Verified — terminology alias', 1),
+('Blue', 'Mauve Blue', 'Not applicable. One D is Cobalt Blue.', 'Yes. Two D on blue. Not a mauve allele.', 'bl ; two D. No mauve allele.', 'bl_D / bl_D', 'bl/bl|D/D', 'Intermediate dominant', 'Display name kept. Scientific class is blue DF dark.', 'AGASSCOM Group 5 AGSC 5.4.01', 'Verified — terminology alias', 1);

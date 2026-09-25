@@ -1,0 +1,195 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Count 2 /Kids [5 0 R 7 0 R] >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Length 2442 >>
+stream
+BT
+/F1 12 Tf
+50 800 Td
+(AGAPORA Image Prompt Instructions) Tj
+/F1 9 Tf
+0 -22 Td
+(AGAPORA IMAGE PROMPT INSTRUCTIONS) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Use this after RBGIA has already computed each egg/chick outcome.) Tj
+0 -14 Td
+(The image API must not calculate genetics.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(1. Collect from EACH outcome:) Tj
+0 -14 Td
+(   - SPECIES) Tj
+0 -14 Td
+(   - BASE COLOR) Tj
+0 -14 Td
+(   - VISUAL MUTATION) Tj
+0 -14 Td
+(   - SPLIT AND HIDDEN GENES) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(2. Insert those four fields into the prompt template.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(3. Send the composed prompt to the image API \(Pollinations\).) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(4. Save the prompt text to a PDF. Save the returned picture on that egg card.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(DRAW: species + base color + visual mutations.) Tj
+0 -14 Td
+(DO NOT DRAW: split and hidden genes.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(PROMPT TEMPLATE) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(AGAPORA OFFSPRING IMAGE PROMPT) Tj
+0 -14 Td
+(This image is a visual representation of ONE computed egg/chick outcome.) Tj
+0 -14 Td
+(Do not invent genetics. Do not add extra mutations. Do not draw hidden genes.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(SPECIES: {SPECIES} \({SCIENTIFIC_NAME}\)) Tj
+0 -14 Td
+(SEX: {SEX}) Tj
+0 -14 Td
+(BASE COLOR: {BASE COLOR}) Tj
+0 -14 Td
+(VISUAL MUTATIONS \(DRAW THESE\): {VISUAL MUTATION}) Tj
+0 -14 Td
+(SPLIT AND HIDDEN GENES \(DO NOT DRAW\): {SPLIT AND HIDDEN GENES}) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(INSTRUCTIONS:) Tj
+0 -14 Td
+(- Draw one realistic adult {SPECIES} \({SCIENTIFIC_NAME}\) only.) Tj
+0 -14 Td
+(- Use BASE COLOR as the ground color of the plumage.) Tj
+0 -14 Td
+(- Draw VISUAL MUTATIONS as visible plumage. If none, keep wild-type markings for that) Tj
+0 -14 Td
+(species.) Tj
+0 -14 Td
+(- Split and hidden genes must stay invisible. The bird looks normal at those loci.) Tj
+0 -14 Td
+(- Dark eyes unless a visual mutation already requires otherwise.) Tj
+0 -14 Td
+(- Clean studio photograph, single bird, no text, no labels, no extra birds.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(EXAMPLE \(Fischer cock, green, visual SL Greywing, hidden Opaline and Dilute\)) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(AGAPORA OFFSPRING IMAGE PROMPT) Tj
+0 -14 Td
+(This image is a visual representation of ONE computed egg/chick outcome.) Tj
+0 -14 Td
+(Do not invent genetics. Do not add extra mutations. Do not draw hidden genes.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(SPECIES: Fischer's lovebird \(Agapornis fischeri\)) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 1488 >>
+stream
+BT
+/F1 12 Tf
+50 800 Td
+(AGAPORA Image Prompt Instructions) Tj
+/F1 9 Tf
+0 -22 Td
+(SEX: Male / Cock) Tj
+0 -14 Td
+(BASE COLOR: Green) Tj
+0 -14 Td
+(VISUAL MUTATIONS \(DRAW THESE\): SL Greywing) Tj
+0 -14 Td
+(SPLIT AND HIDDEN GENES \(DO NOT DRAW\): Opaline, Dilute) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(INSTRUCTIONS:) Tj
+0 -14 Td
+(- Draw one realistic adult Fischer's lovebird \(Agapornis fischeri\) only.) Tj
+0 -14 Td
+(- Use BASE COLOR as the ground color of the plumage.) Tj
+0 -14 Td
+(- Draw VISUAL MUTATIONS as visible plumage. If none, keep wild-type markings for that) Tj
+0 -14 Td
+(species.) Tj
+0 -14 Td
+(- Split and hidden genes must stay invisible. The bird looks normal at those loci.) Tj
+0 -14 Td
+(- Dark eyes unless a visual mutation already requires otherwise.) Tj
+0 -14 Td
+(- Clean studio photograph, single bird, no text, no labels, no extra birds.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(SETUP \(OpenRouter image generation\)) Tj
+0 -14 Td
+(1. In backend/.env set OFFSPRING_IMAGE_ENABLED=true) Tj
+0 -14 Td
+(2. OFFSPRING_IMAGE_PROVIDER=openrouter) Tj
+0 -14 Td
+(3. Set OPENROUTER_API_KEY from https://openrouter.ai/keys) Tj
+0 -14 Td
+(4. php artisan storage:link) Tj
+0 -14 Td
+(5. Restart Laravel, then Analyze a pair.) Tj
+0 -14 Td
+(6. Each egg collects SPECIES, BASE COLOR, VISUAL MUTATION, SPLIT AND HIDDEN GENES.) Tj
+0 -14 Td
+(7. AGAPORA composes the prompt, calls OpenRouter, stores the PNG, and writes this PDF.) Tj
+0 -14 Td
+(8. If OpenRouter credits run out, Hugging Face is used as fallback.) Tj
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000121 00000 n 
+0000000216 00000 n 
+0000002710 00000 n 
+0000002836 00000 n 
+0000004376 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+4502
+%%EOF

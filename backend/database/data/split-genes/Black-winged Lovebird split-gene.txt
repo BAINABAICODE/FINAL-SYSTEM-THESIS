@@ -1,0 +1,30 @@
+Black-winged Lovebird split-gene
+
+CREATE TABLE taranta_split_genes (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  species VARCHAR(64) NOT NULL DEFAULT 'Agapornis taranta',
+  split_gene VARCHAR(64) NOT NULL,
+  genetic_symbol VARCHAR(32) NOT NULL,
+  wild_type_allele VARCHAR(32) NOT NULL,
+  mutant_allele VARCHAR(32) NOT NULL,
+  inheritance_type VARCHAR(80) NOT NULL,
+  genetic_category VARCHAR(64) NOT NULL,
+  cock_can_split TINYINT(1) NOT NULL,
+  hen_can_split TINYINT(1) NOT NULL,
+  heterozygous_genotype VARCHAR(64) NOT NULL,
+  homozygous_genotype VARCHAR(128) NOT NULL,
+  genetic_code VARCHAR(64) NOT NULL,
+  phenotype_when_visual VARCHAR(64) NOT NULL,
+  description TEXT NOT NULL,
+  scientific_source VARCHAR(255) NOT NULL,
+  verification_status VARCHAR(64) NOT NULL,
+  computable TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_species_split (species, split_gene)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO taranta_split_genes
+  (split_gene, genetic_symbol, wild_type_allele, mutant_allele, inheritance_type, genetic_category, cock_can_split, hen_can_split, heterozygous_genotype, homozygous_genotype, genetic_code, phenotype_when_visual, description, scientific_source, verification_status, computable)
+VALUES
+('Split Bronze Fallow', 'a*bz', 'a+', 'a*bz', 'Autosomal recessive', 'Fallow', 1, 1, 'a+/a*bz', 'a*bz/a*bz', 'a+/a*bz', 'Bronze Fallow', 'One a*bz is hidden. The split bird looks green. Not pale fallow, and not an ino allele. No NSL Ino is stored for this species.', 'MUTAVI Mutabase, bronze fallow in A. taranta; symbol a*bz', 'Verified', 1),
+('Split Pale Fallow', 'pf', 'pf+', 'pf', 'Autosomal recessive', 'Fallow', 1, 1, 'pf+/pf', 'pf/pf', 'pf+/pf', 'Pale Fallow', 'One pf is hidden. Separate locus from bronze fallow. Not lutino. Dun fallow is not stored for this species.', 'Birdkeeper.dk, pale fallow original in A. taranta; symbol pf', 'Verified', 1);

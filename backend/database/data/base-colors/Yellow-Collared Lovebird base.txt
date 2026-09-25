@@ -1,0 +1,33 @@
+Yellow-Collared Lovebird base
+
+CREATE TABLE personatus_base_colors (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  species VARCHAR(64) NOT NULL DEFAULT 'Agapornis personatus',
+  series VARCHAR(64) NOT NULL,
+  base_color VARCHAR(64) NOT NULL,
+  sf VARCHAR(255) NOT NULL,
+  df VARCHAR(255) NOT NULL,
+  allele VARCHAR(255) NOT NULL,
+  genotype VARCHAR(255) NOT NULL,
+  genetic_code VARCHAR(64) NOT NULL,
+  inheritance_type VARCHAR(80) NOT NULL,
+  phenotype TEXT NOT NULL,
+  verification_status VARCHAR(64) NOT NULL,
+  scientific_source VARCHAR(255) NOT NULL,
+  computable TINYINT(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_species_color (species, base_color)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO personatus_base_colors
+  (series, base_color, sf, df, allele, genotype, genetic_code, inheritance_type, phenotype, verification_status, scientific_source, computable)
+VALUES
+('Green', 'Green', 'Not applicable. Normal form, 0 dark factor.', 'Not applicable.', 'bl+ ; D+', 'bl+_D+ / bl+_D+', 'bl+/bl+|D+/D+', 'Wild type', 'Ancestral green. A split for blue or turquoise still looks green.', 'Verified', 'AGASSCOM Group 2 AGSC 2.1.00', 1),
+('Green', 'Dark Green', 'Yes. One D. Cannot be split.', 'Not applicable. Two D is Olive.', 'bl+ ; one D. No Dark Green allele.', 'bl+_D / bl+_D+', 'bl+/bl+|D+/D', 'Intermediate dominant', 'Requested name kept. Verified identity is green SF dark. Jade is a dark-factor synonym.', 'Verified — terminology alias', 'AGASSCOM Group 2 AGSC 2.3.00', 1),
+('Green', 'Olive', 'Not applicable. One D is Dark Green.', 'Yes. Two D on green.', 'bl+ ; two D. No olive allele.', 'bl+_D / bl+_D', 'bl+/bl+|D/D', 'Intermediate dominant', 'Requested name kept. Verified identity is green DF dark.', 'Verified — terminology alias', 'AGASSCOM Group 2 AGSC 2.3.01', 1),
+('Blue', 'Blue', 'Not applicable. Hidden blue is visual Green.', 'Not applicable. 0 dark factor.', 'bl (AGASSCOM symbol b). Not a cobalt or mauve allele.', 'bl_D+ / bl_D+', 'bl/bl|D+/D+', 'Autosomal recessive', 'Blue ground color. Homozygous standard blue. AGASSCOM marks blue AR-MA.', 'Verified', 'AGASSCOM Group 2 AGSC 2.2.00', 1),
+('Blue', 'Cobalt', 'Yes. One D on blue. Not a cobalt allele.', 'Not applicable. Two D is Mauve.', 'bl ; one D. Cobalt is a regional name of dark factor.', 'bl_D / bl_D+', 'bl/bl|D+/D', 'Intermediate dominant', 'Requested name kept. Verified identity is blue SF dark.', 'Verified — terminology alias', 'AGASSCOM Group 2 AGSC 2.4.00', 1),
+('Blue', 'Mauve', 'Not applicable. One D is Cobalt.', 'Yes. Two D on blue. Not a mauve allele.', 'bl ; two D. Mauve is a regional name of dark factor.', 'bl_D / bl_D', 'bl/bl|D/D', 'Intermediate dominant', 'Requested name kept. Verified identity is blue DF dark.', 'Verified — terminology alias', 'AGASSCOM Group 2 AGSC 2.4.01', 1),
+('Turquoise', 'Turquoise', 'Not applicable. Hidden turquoise is visual Green.', 'Not applicable. 0 dark factor.', 'bltq (AGASSCOM symbol btq). No teal allele.', 'bl*tq_D+ / bl*tq_D+', 'bltq/bltq|D+/D+', 'Autosomal recessive', 'Turquoise ground color. Also called parblue. Not aqua.', 'Verified', 'AGASSCOM Group 2 AGSC 2.7.00; MUTAVI', 1),
+('Turquoise', 'Turquoise SF Dark', 'Needs Verification as a class.', 'Not applicable.', 'No separate allele.', 'Needs Verification. Not encoded.', 'UNVERIFIED', 'Intermediate dominant', 'Subgroup title allows dark factor, but no turquoise SF dark class is listed. Do not compute.', 'Needs Verification', 'AGASSCOM Group 2 subgroup 02-7', 0),
+('Turquoise', 'Turquoise DF Dark', 'Not applicable.', 'Needs Verification as a class.', 'No separate allele.', 'Needs Verification. Not encoded.', 'UNVERIFIED', 'Intermediate dominant', 'No turquoise DF dark class is listed. Do not compute.', 'Needs Verification', 'AGASSCOM Group 2 subgroup 02-7', 0);

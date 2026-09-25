@@ -1,0 +1,43 @@
+Yellow-collared Lovebird visual-mutation 
+
+CREATE TABLE personatus_visual_mutations (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  species VARCHAR(64) NOT NULL DEFAULT 'Agapornis personatus',
+  series VARCHAR(64) NOT NULL,
+  mutation VARCHAR(64) NOT NULL,
+  sf VARCHAR(255) NOT NULL,
+  df VARCHAR(255) NOT NULL,
+  allele VARCHAR(255) NOT NULL,
+  genotype VARCHAR(255) NOT NULL,
+  genetic_code VARCHAR(64) NOT NULL,
+  inheritance_type VARCHAR(80) NOT NULL,
+  phenotype TEXT NOT NULL,
+  scientific_source VARCHAR(255) NOT NULL,
+  verification_status VARCHAR(64) NOT NULL,
+  computable TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_species_mutation (species, mutation)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO personatus_visual_mutations
+  (series, mutation, sf, df, allele, genotype, genetic_code, inheritance_type, phenotype, scientific_source, verification_status, computable)
+VALUES
+('Sex-linked', 'Cinnamon', 'Not applicable. A split male looks wild type.', 'Not applicable. Not a dark-factor dosage.', 'cin. Not fallow and not the ino locus.', 'cin/cin male; cin/W female', 'cin/cin|cin/W', 'Sex-linked recessive', 'Eumelanin is brown rather than black. Sex-linked in this species. Not Peach-faced SL Ino.', 'MUTAVI, cinnamon original in the eye-ring group; AGASSCOM Group 2', 'Verified', 1),
+('Sex-linked', 'Opaline', 'Not applicable. A split male looks wild type.', 'Not applicable.', 'op. Distribution mutation, not a bl allele.', 'op/op male; op/W female', 'op/op|op/W', 'Sex-linked recessive', 'Pigment is redistributed. Opaline NSL ino is a combination, not a third allele.', 'MUTAVI, opaline original; AGASSCOM Group 2 symbol op', 'Verified', 1),
+('a locus', 'NSL Ino', 'Not applicable. A split bird looks wild type.', 'Not applicable. DEC and Pastel are other alleles of this locus, not a second dose.', 'a. Autosomal. Not SL ino. Introgressed from A. lilianae.', 'a/a', 'a/a', 'Autosomal recessive', 'Near-total eumelanin loss and red eyes. On green this is lutino. Albino is this same allele on a blue ground, not a separate mutation.', 'MUTAVI 17 Aug 2025, NSL ino GI in A. personatus; AGASSCOM lutino class', 'Verified — introgressed', 1),
+('a locus', 'Dark Eyed Clear', 'Not applicable. A split bird looks wild type.', 'Not applicable. Not NSL Ino.', 'a*dec. Allele of a. Dark eyes, not red eyes.', 'a*dec/a*dec', 'a*dec/a*dec', 'Autosomal recessive', 'Clear plumage with dark eyes. Decino is NSL Ino plus this allele, a combination, not a separate mutation.', 'MUTAVI 17 Aug 2025, dark eyed clear GI in A. personatus; symbol a*dec', 'Verified — introgressed', 1),
+('a locus', 'Pastel', 'Not applicable. A split bird looks wild type.', 'Not applicable. Not dilute.', 'a*pa. Allele of a. Not dil.', 'a*pa/a*pa', 'a*pa/a*pa', 'Autosomal recessive', 'Partial eumelanin reduction with dark eyes. Pastelino is this allele with NSL Ino, not a separate mutation.', 'MUTAVI 17 Aug 2025, pastel original in A. personatus; symbol a*pa', 'Verified', 1),
+('Fallow', 'Pale Fallow', 'Not applicable. A split bird looks wild type.', 'Not applicable. Not sex-linked pale.', 'pf. Separate locus from a.', 'pf/pf', 'pf/pf', 'Autosomal recessive', 'Autosomal pale fallow. Not the Peach-faced sex-linked Pale allele.', 'MUTAVI 17 Aug 2025, pale fallow original in A. personatus; symbol pf', 'Verified', 1),
+('Fallow', 'Dun Fallow', 'Not applicable. A split bird looks wild type.', 'Not applicable. The symbol df is dun fallow, not dark factor D.', 'df. Dun fallow. Not D.', 'df/df', 'df/df', 'Autosomal recessive', 'Autosomal dun fallow. Original in this species. Do not store this symbol as dark factor.', 'MUTAVI 17 Aug 2025, dun fallow original in A. personatus; symbol df', 'Verified', 1),
+('Eumelanin distribution', 'Dilute', 'Not applicable. A split bird looks wild type.', 'Not applicable. Not pastel and not dark factor.', 'dil. Autosomal. Not sex-linked.', 'dil/dil', 'dil/dil', 'Autosomal recessive', 'Eumelanin is diluted. Introgressed. Not pastel and not SL Greywing.', 'MUTAVI 17 Aug 2025, dilute GI in A. personatus; AGASSCOM dilute class', 'Verified — introgressed', 1),
+('Pied', 'Recessive Pied', 'Not applicable. A split bird looks wild type.', 'Not applicable. Not dominant pied.', 's. Not a*dec.', 's/s', 's/s', 'Autosomal recessive', 'Leucistic pied. Visual only when homozygous. Not dark-eyed clear.', 'MUTAVI 17 Aug 2025, recessive pied GI in A. personatus; symbol s', 'Verified — introgressed', 1),
+('Pied', 'Dominant Pied', 'Yes, one Pi is visual. This is dominance, not dark-factor SF.', 'Homozygous form is not stored. Not a dark-factor dosage.', 'Pi. Not recessive pied.', 'Pi/Pi+', 'Pi+/Pi', 'Autosomal dominant', 'Pied with one Pi. A second Pi is not entered as a separate verified phenotype.', 'MUTAVI 17 Aug 2025, dominant pied GI in A. personatus; symbol Pi', 'Verified — introgressed', 1),
+('Incomplete dominant', 'Dominant Edged', 'Yes. One Ed. Cannot be split.', 'Not this row. Two Ed is Dominant Edged DF.', 'one Ed. Introgressed from A. fischeri. Not dilute.', 'Ed/Ed+', 'Ed+/Ed', 'Incomplete dominant', 'Eumelanin is reduced to an edged or spangled pattern. Introgressed into this species.', 'MUTAVI 17 Aug 2025, dominant edged GI in A. personatus; symbol Ed', 'Verified — dosage', 1),
+('Incomplete dominant', 'Dominant Edged DF', 'Not this row. One Ed is Dominant Edged.', 'Yes. Two Ed. Same allele, second dose.', 'two Ed. No separate DF allele.', 'Ed/Ed', 'Ed/Ed', 'Incomplete dominant', 'Same edged mutation, homozygous. Stronger melanin loss than one Ed.', 'MUTAVI 17 Aug 2025, dominant edged incomplete dominant; symbol Ed', 'Verified — dosage', 1),
+('Incomplete dominant', 'Euwing', 'Yes. One Ew. Cannot be split.', 'Not this row. Two Ew is Euwing DF.', 'one Ew. Regional spelling ewing is not another allele.', 'Ew/Ew+', 'Ew+/Ew', 'Incomplete dominant', 'Melanin is retained more strongly on the wings than on the body. Introgressed from A. fischeri.', 'MUTAVI 17 Aug 2025, euwing GI in A. personatus; symbol Ew', 'Verified — dosage', 1),
+('Incomplete dominant', 'Euwing DF', 'Not this row. One Ew is Euwing.', 'Yes. Two Ew. Same allele, second dose.', 'two Ew. No separate DF allele.', 'Ew/Ew', 'Ew/Ew', 'Incomplete dominant', 'Same euwing mutation, homozygous. Stronger contrast than one Ew.', 'MUTAVI 17 Aug 2025, euwing incomplete dominant; symbol Ew', 'Verified — dosage', 1),
+('Incomplete dominant', 'Misty', 'Yes. One Mt. Cannot be split.', 'Not this row. Two Mt is Misty DF.', 'one Mt. Not dominant reduced.', 'Mt/Mt+', 'Mt+/Mt', 'Incomplete dominant', 'Incomplete dominant misting of the colour. Established in this species.', 'MUTAVI, misty in A. personatus; AGASSCOM misty class; symbol Mt', 'Verified — dosage', 1),
+('Incomplete dominant', 'Misty DF', 'Not this row. One Mt is Misty.', 'Yes. Two Mt. Same allele, second dose.', 'two Mt. No separate DF allele.', 'Mt/Mt', 'Mt/Mt', 'Incomplete dominant', 'Same misty mutation, homozygous. Stronger effect than one Mt.', 'MUTAVI, misty incomplete dominant; symbol Mt', 'Verified — dosage', 1),
+('Dominant', 'Slaty', 'Yes, one Slt is visual. This is dominance, not dark-factor SF.', 'Homozygous form is not stored. Not grey factor.', 'Slt. Autosomal dominant. Not Gf.', 'Slt/Slt+', 'Slt+/Slt', 'Autosomal dominant', 'Slaty or steel wash. Introgressed. A show name such as slaty SF dark is this mutation plus dark factor, not a second slaty allele.', 'MUTAVI 17 Aug 2025, slaty GI in A. personatus; symbol Slt', 'Verified — introgressed', 1),
+('Incomplete dominant', 'Violet', 'Yes. One V. Cannot be split.', 'Not this row. Two V is Double Violet.', 'one V. Original in this species. Not violet type 2.', 'V/V+', 'V+/V', 'Incomplete dominant', 'Feather-structure mutation. One V gives a violet wash. Original in A. personatus.', 'MUTAVI 17 Aug 2025, violet original in A. personatus; symbol V', 'Verified — dosage', 1),
+('Incomplete dominant', 'Double Violet', 'Not this row. One V is Violet.', 'Yes. Two V. Same allele, second dose.', 'two V. No double-violet allele.', 'V/V', 'V/V', 'Incomplete dominant', 'Same violet mutation, homozygous. Stronger violet than one V.', 'MUTAVI 17 Aug 2025, violet incomplete dominant; symbol V', 'Verified — dosage', 1);

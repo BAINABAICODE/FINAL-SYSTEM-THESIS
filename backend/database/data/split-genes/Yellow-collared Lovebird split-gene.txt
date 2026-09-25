@@ -1,0 +1,40 @@
+Yellow-collared Lovebird split-gene
+
+CREATE TABLE personatus_split_genes (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  species VARCHAR(64) NOT NULL DEFAULT 'Agapornis personatus',
+  split_gene VARCHAR(64) NOT NULL,
+  genetic_symbol VARCHAR(32) NOT NULL,
+  wild_type_allele VARCHAR(32) NOT NULL,
+  mutant_allele VARCHAR(32) NOT NULL,
+  inheritance_type VARCHAR(80) NOT NULL,
+  genetic_category VARCHAR(64) NOT NULL,
+  cock_can_split TINYINT(1) NOT NULL,
+  hen_can_split TINYINT(1) NOT NULL,
+  heterozygous_genotype VARCHAR(64) NOT NULL,
+  homozygous_genotype VARCHAR(128) NOT NULL,
+  genetic_code VARCHAR(64) NOT NULL,
+  phenotype_when_visual VARCHAR(64) NOT NULL,
+  description TEXT NOT NULL,
+  scientific_source VARCHAR(255) NOT NULL,
+  verification_status VARCHAR(64) NOT NULL,
+  computable TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_species_split (species, split_gene)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO personatus_split_genes
+  (split_gene, genetic_symbol, wild_type_allele, mutant_allele, inheritance_type, genetic_category, cock_can_split, hen_can_split, heterozygous_genotype, homozygous_genotype, genetic_code, phenotype_when_visual, description, scientific_source, verification_status, computable)
+VALUES
+('Split Blue1', 'bl1', 'bl+', 'bl1', 'Autosomal recessive', 'Base-color locus bl', 1, 1, 'bl+/bl1', 'bl1/bl1', 'bl+/bl1', 'Blue1', 'One bl1 is hidden. The split bird looks green. Original in this species. Not bl2.', 'MUTAVI 17 Aug 2025, blue1 original in A. personatus; symbol bl1', 'Verified', 1),
+('Split Blue2', 'bl2', 'bl+', 'bl2', 'Autosomal recessive', 'Base-color locus bl', 1, 1, 'bl+/bl2', 'bl2/bl2', 'bl+/bl2', 'Blue2', 'One bl2 is hidden. The split bird looks green. Introgressed. bl1/bl2 is a visual compound, not a split gene.', 'MUTAVI 17 Aug 2025, blue2 GI in A. personatus; symbol bl2', 'Verified — introgressed', 1),
+('Split Turquoise', 'bl*tq', 'bl+', 'bl*tq', 'Autosomal recessive', 'Base-color locus bl', 1, 1, 'bl+/bl*tq', 'bl*tq/bl*tq', 'bl+/bltq', 'Turquoise', 'One bl*tq is hidden. The split bird looks green. Not aqua. Aqua is not a stored allele of this species.', 'MUTAVI, turquoise in A. personatus; symbol bl*tq', 'Verified', 1),
+('Split NSL Ino', 'a', 'a+', 'a', 'Autosomal recessive', 'a locus', 1, 1, 'a+/a', 'a/a', 'a+/a', 'NSL Ino, called lutino on green', 'One a is hidden. Albino is this allele on blue, not a hidden gene. A bird can carry only two alleles of locus a.', 'MUTAVI 17 Aug 2025, NSL ino GI in A. personatus; symbol a', 'Verified — introgressed', 1),
+('Split Dark Eyed Clear', 'a*dec', 'a+', 'a*dec', 'Autosomal recessive', 'a locus', 1, 1, 'a+/a*dec', 'a*dec/a*dec', 'a+/a*dec', 'Dark Eyed Clear', 'One a*dec is hidden. a/a*dec is visual decino, not two splits.', 'MUTAVI, dark eyed clear GI in A. personatus; symbol a*dec', 'Verified — introgressed', 1),
+('Split Pastel', 'a*pa', 'a+', 'a*pa', 'Autosomal recessive', 'a locus', 1, 1, 'a+/a*pa', 'a*pa/a*pa', 'a+/a*pa', 'Pastel', 'One a*pa is hidden. Not dilute. a/a*pa is visual pastelino, not two splits.', 'MUTAVI, pastel original in A. personatus; symbol a*pa', 'Verified', 1),
+('Split Pale Fallow', 'pf', 'pf+', 'pf', 'Autosomal recessive', 'Fallow', 1, 1, 'pf+/pf', 'pf/pf', 'pf+/pf', 'Pale Fallow', 'One pf is hidden. Not sex-linked pale. Bronze fallow is not stored for this species.', 'MUTAVI, pale fallow original in A. personatus; symbol pf', 'Verified', 1),
+('Split Dun Fallow', 'df', 'df+', 'df', 'Autosomal recessive', 'Fallow', 1, 1, 'df+/df', 'df/df', 'df+/df', 'Dun Fallow', 'One dun-fallow df is hidden. This symbol is not dark factor D.', 'MUTAVI, dun fallow original in A. personatus; symbol df', 'Verified', 1),
+('Split Dilute', 'dil', 'dil+', 'dil', 'Autosomal recessive', 'Eumelanin distribution', 1, 1, 'dil+/dil', 'dil/dil', 'dil+/dil', 'Dilute', 'One dil is hidden. Not pastel.', 'MUTAVI, dilute GI in A. personatus; symbol dil', 'Verified — introgressed', 1),
+('Split Recessive Pied', 's', 's+', 's', 'Autosomal recessive', 'Pied', 1, 1, 's+/s', 's/s', 's+/s', 'Recessive Pied', 'One s is hidden. Dominant pied cannot be split.', 'MUTAVI, recessive pied GI in A. personatus; symbol s', 'Verified — introgressed', 1),
+('Split Cinnamon', 'cin', 'cin+', 'cin', 'Sex-linked recessive', 'Z-linked eumelanin', 1, 0, 'cin+/cin cock', 'cin/cin cock; hen visual is cin/W, not homozygous', 'cin+/cin', 'Cinnamon', 'Only a cock can hide cin. A hen with cin on her single Z is visual.', 'MUTAVI, cinnamon in A. personatus; symbol cin', 'Verified', 1),
+('Split Opaline', 'op', 'op+', 'op', 'Sex-linked recessive', 'Z-linked distribution', 1, 0, 'op+/op cock', 'op/op cock; hen visual is op/W, not homozygous', 'op+/op', 'Opaline', 'Only a cock can hide op. A hen with op on her single Z is visual.', 'MUTAVI, opaline in A. personatus; symbol op', 'Verified', 1);

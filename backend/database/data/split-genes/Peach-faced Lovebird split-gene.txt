@@ -1,0 +1,42 @@
+Peach-faced Lovebird split-gene 
+
+CREATE TABLE pfl_split_genes (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  species VARCHAR(64) NOT NULL DEFAULT 'Agapornis roseicollis',
+  split_gene VARCHAR(64) NOT NULL,
+  genetic_symbol VARCHAR(32) NOT NULL,
+  wild_type_allele VARCHAR(32) NOT NULL,
+  mutant_allele VARCHAR(32) NOT NULL,
+  inheritance_type VARCHAR(80) NOT NULL,
+  genetic_category VARCHAR(64) NOT NULL,
+  cock_can_split TINYINT(1) NOT NULL,
+  hen_can_split TINYINT(1) NOT NULL,
+  heterozygous_genotype VARCHAR(64) NOT NULL,
+  homozygous_genotype VARCHAR(128) NOT NULL,
+  genetic_code VARCHAR(64) NOT NULL,
+  phenotype_when_visual VARCHAR(64) NOT NULL,
+  description TEXT NOT NULL,
+  scientific_source VARCHAR(255) NOT NULL,
+  verification_status VARCHAR(64) NOT NULL,
+  computable TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_species_split (species, split_gene)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO pfl_split_genes
+  (split_gene, genetic_symbol, wild_type_allele, mutant_allele, inheritance_type, genetic_category, cock_can_split, hen_can_split, heterozygous_genotype, homozygous_genotype, genetic_code, phenotype_when_visual, description, scientific_source, verification_status, computable)
+VALUES
+('Split Aqua', 'bl*aq', 'bl+', 'bl*aq', 'Autosomal recessive', 'Base-color locus bl', 1, 1, 'bl+/bl*aq', 'bl*aq/bl*aq', 'bl+/blaq', 'Aqua', 'One bl*aq is hidden. The split bird looks green. Shorthand aq is not a separate locus. bl*aq/bl*tq is visual Seagreen, not a split.', 'MUTAVI, aqua autosomal recessive; IA symbol bl*aq', 'Verified', 1),
+('Split Turquoise', 'bl*tq', 'bl+', 'bl*tq', 'Autosomal recessive', 'Base-color locus bl', 1, 1, 'bl+/bl*tq', 'bl*tq/bl*tq', 'bl+/bltq', 'Turquoise', 'One bl*tq is hidden. The split bird looks green. There is no true blue allele to hide.', 'MUTAVI, turquoise autosomal recessive; IA symbol bl*tq', 'Verified', 1),
+('Split Bronze Fallow', 'a*bz', 'a+', 'a*bz', 'Autosomal recessive', 'Fallow', 1, 1, 'a+/a*bz', 'a*bz/a*bz', 'a+/a*bz', 'Bronze Fallow', 'One a*bz is hidden. Superscript a^bz is the same allele. Not pale fallow.', 'MUTAVI symbol list, bronze fallow a + a*bz', 'Verified', 1),
+('Split Dilute', 'dil', 'dil+', 'dil', 'Autosomal recessive', 'Eumelanin distribution', 1, 1, 'dil+/dil', 'dil/dil', 'dil+/dil', 'Dilute', 'One dil is hidden. Not marbled and not dark factor.', 'MUTAVI, dilute autosomal recessive; symbol dil', 'Verified', 1),
+('Split Marbled', 'mb', 'mb+', 'mb', 'Autosomal recessive', 'Eumelanin distribution', 1, 1, 'mb+/mb', 'mb/mb', 'mb+/mb', 'Marbled', 'One mb is hidden. MUTAVI symbol is mb. The AGASSCOM symbol adil is not used.', 'MUTAVI, marbled autosomal recessive; symbol mb', 'Verified', 1),
+('Split Pale Fallow', 'pf', 'pf+', 'pf', 'Autosomal recessive', 'Fallow', 1, 1, 'pf+/pf', 'pf/pf', 'pf+/pf', 'Pale Fallow', 'One pf is hidden. Not sex-linked pale and not pale headed.', 'MUTAVI, pale fallow autosomal recessive; symbol pf', 'Verified', 1),
+('Split DM Jade', 'ja', 'ja+', 'ja', 'Autosomal recessive', 'Eumelanin distribution', 1, 1, 'ja+/ja', 'ja/ja', 'ja+/ja', 'DM Jade', 'One ja is hidden. Not dark factor and not pastel.', 'MUTAVI, DM jade autosomal recessive; symbol ja', 'Verified', 1),
+('Split Recessive Pied', 's', 's+', 's', 'Autosomal recessive', 'Pied', 1, 1, 's+/s', 's/s', 's+/s', 'Recessive Pied', 'One s is hidden. Dominant pied cannot be split.', 'MUTAVI, recessive pied autosomal recessive; symbol s', 'Verified', 1),
+('Split Orange Face', 'of', 'of+', 'of', 'Autosomal recessive', 'Psittacin', 1, 1, 'of+/of', 'of/of', 'of+/of', 'Orange Face', 'MUTAVI inheritance is autosomal recessive, so one of is hidden. Do not treat it as incomplete dominant. Not pale headed.', 'MUTAVI Mutabase, orange face autosomal recessive; symbol of', 'Verified', 1),
+('Split Cinnamon', 'cin', 'cin+', 'cin', 'Sex-linked recessive', 'Z-linked eumelanin', 1, 0, 'cin+/cin cock', 'cin/cin cock; hen visual is cin/W, not homozygous', 'cin+/cin', 'Cinnamon', 'Only a cock can hide cin. A hen with cin on her single Z is visual. Hen split is not allowed.', 'MUTAVI, cinnamon sex-linked recessive; symbol cin', 'Verified', 1),
+('Split SL Ino', 'ino', 'ino+', 'ino', 'Sex-linked recessive', 'Z-linked ino locus', 1, 0, 'ino+/ino cock', 'ino/ino cock; hen visual is ino/W, not homozygous', 'ino+/ino', 'SL Ino, called lutino on green', 'Only a cock can hide ino. Albino is this allele on turquoise, not a hidden gene. Not NSL ino.', 'MUTAVI, SL ino sex-linked recessive; symbol ino', 'Verified', 1),
+('Split Pallid', 'ino*pd', 'ino+', 'ino*pd', 'Sex-linked recessive', 'Z-linked ino locus', 1, 0, 'ino+/ino*pd cock', 'ino*pd/ino*pd cock; hen visual is ino*pd/W', 'ino+/ino*pd', 'Pallid', 'Australian cinnamon is this allele, not cin. Only a cock can hide it. ino/ino*pd is a visual compound, not a split.', 'MUTAVI, pallid allele of ino; symbol ino*pd', 'Verified', 1),
+('Split Pale', 'ino*pe', 'ino+', 'ino*pe', 'Sex-linked recessive', 'Z-linked ino locus', 1, 0, 'ino+/ino*pe cock', 'ino*pe/ino*pe cock; hen visual is ino*pe/W', 'ino+/ino*pe', 'Pale', 'Greek pale is this allele of ino. Only a cock can hide it. Not pale fallow.', 'MUTAVI, pale allele of ino; symbol ino*pe', 'Verified', 1),
+('Split Opaline', 'op', 'op+', 'op', 'Sex-linked recessive', 'Z-linked distribution', 1, 0, 'op+/op cock', 'op/op cock; hen visual is op/W, not homozygous', 'op+/op', 'Opaline', 'Only a cock can hide op. A hen with op on her single Z is visual.', 'MUTAVI, opaline sex-linked recessive; symbol op', 'Verified', 1);
