@@ -182,6 +182,7 @@ class VisualMutationCatalog
             'dosage_key' => self::dosageKey($mutation->allele),
             'locus_key' => self::locusKey($mutation->series, $mutation->allele),
             'combination_names' => $combinations[$mutation->id] ?? [],
+            'head_to_tail' => HeadToTailPhenotypeDataset::compose($mutation->lovebird_species_id, [$mutation->name]),
         ];
     }
 

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ChickOutcomeImage;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -83,7 +84,7 @@ class OpenRouterImageService
             $url = Storage::disk('public')->url($path);
 
             ChickOutcomeImage::query()->updateOrCreate(
-                ['signature' => $signature],
+                ['signature' => $signature, 'user_id' => auth()->id()],
                 [
                     'egg_number' => is_numeric($genetic['egg_number']) ? (int) $genetic['egg_number'] : null,
                     'species' => $genetic['species'],
@@ -239,7 +240,7 @@ class OpenRouterImageService
         return null;
     }
 
-    private function http(): \Illuminate\Http\Client\PendingRequest
+    private function http(): PendingRequest
     {
         $bundle = $this->caBundlePath();
         $request = $bundle ? Http::withOptions(['verify' => $bundle]) : Http::withOptions([]);
@@ -277,7 +278,8 @@ class OpenRouterImageService
     {
         $safeEgg = preg_replace('/[^0-9A-Za-z_-]/', '', (string) ($eggNumber ?? 'x')) ?: 'x';
         $ext = str_starts_with($binary, "\xFF\xD8\xFF") ? 'jpg' : 'png';
-        $path = 'chicks/chick_'.$safeEgg.'_'.Str::lower(Str::random(12)).'.'.$ext;
+        $owner = auth()->id() ?? 'account';
+        $path = 'chicks/'.$owner.'/chick_'.$safeEgg.'_'.Str::lower(Str::random(12)).'.'.$ext;
         if (! Storage::disk('public')->put($path, $binary)) {
             throw new \RuntimeException('Failed to save the generated chick image to storage.');
         }

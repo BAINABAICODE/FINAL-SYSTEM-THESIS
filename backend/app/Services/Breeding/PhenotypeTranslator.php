@@ -6,6 +6,7 @@ use App\Models\BaseColor;
 use App\Models\SplitGene;
 use App\Models\VisualMutation;
 use App\Support\BaseColorCatalog;
+use App\Support\HeadToTailPhenotypeCatalog;
 use App\Support\SplitGeneCatalog;
 use App\Support\VisualMutationCatalog;
 use Illuminate\Support\Collection;
@@ -48,7 +49,10 @@ class PhenotypeTranslator
                 $eggNumber++;
                 $record = $this->lookupStoredRecord($outcome, (string) $row['genotype']);
                 $phenotypeText = $row['phenotype'] ?? $this->phenotypeForGenotype($record, (string) $row['genotype'], $outcome);
+                $visualMutations = $row['visual_mutations'] ?? $this->mutationNames($parentOne, $parentTwo, $outcome);
+                $baseColor = $row['base_color'] ?? $this->baseColorForOutcome($outcome, $record, $parentOne, $parentTwo);
                 $visual = $this->visualCharacteristicsFromStoredText($phenotypeText, $record);
+                $headToTail = $this->applyHeadToTailCatalog($visual, $species, $visualMutations, $baseColor, $row['sex'] ?? null);
                 $alleles = $this->allelesFromGenotype((string) $row['genotype']);
 
                 $eggs[] = [
@@ -62,10 +66,10 @@ class PhenotypeTranslator
                     'inheritance_type' => $outcome['inheritance_type'] ?? null,
                     'species' => $species,
                     'sex' => $row['sex'] ?? null,
-                    'base_color' => $row['base_color'] ?? $this->baseColorForOutcome($outcome, $record, $parentOne, $parentTwo),
+                    'base_color' => $baseColor,
                     'alleles' => $alleles,
                     'dark_factor' => $this->darkFactorFromRecord($record, (string) $row['genotype']),
-                    'visual_mutations' => $row['visual_mutations'] ?? $this->mutationNames($parentOne, $parentTwo, $outcome),
+                    'visual_mutations' => $visualMutations,
                     'split_hidden_genes' => $row['split_hidden'] ?? $this->splitNames($parentOne, $parentTwo, $outcome),
                     'genotype' => $row['genotype'],
                     'phenotype' => $phenotypeText ?: 'Not specified in stored phenotype record.',
@@ -73,10 +77,12 @@ class PhenotypeTranslator
                     'markings' => $visual['markings'],
                     'eyes' => $visual['eyes'],
                     'head' => $visual['head'],
+                    'neck' => $visual['neck'],
                     'body' => $visual['body'],
                     'wings' => $visual['wings'],
                     'rump' => $visual['rump'],
                     'tail' => $visual['tail'],
+                    'head_to_tail' => $headToTail,
                     'other_visual_characteristics' => $visual['other'],
                     'probability' => [
                         'fraction' => $row['fraction'] ?? null,
@@ -121,6 +127,13 @@ class PhenotypeTranslator
             $number = $index + 1;
             $phenotypeText = $row['phenotype'] ?? 'Not specified in stored phenotype record.';
             $visual = $this->visualCharacteristicsFromStoredText($phenotypeText, null);
+            $headToTail = $this->applyHeadToTailCatalog(
+                $visual,
+                $species,
+                $row['visual_mutations'] ?? [],
+                $row['base_color'] ?? null,
+                $row['sex'] ?? null,
+            );
             $paths = $row['inheritance_paths'] ?? $row['inherited_from']['paths'] ?? [];
 
             $eggs[] = [
@@ -154,10 +167,12 @@ class PhenotypeTranslator
                 'markings' => $visual['markings'],
                 'eyes' => $visual['eyes'],
                 'head' => $visual['head'],
+                'neck' => $visual['neck'],
                 'body' => $visual['body'],
                 'wings' => $visual['wings'],
                 'rump' => $visual['rump'],
                 'tail' => $visual['tail'],
+                'head_to_tail' => $headToTail,
                 'other_visual_characteristics' => $visual['other'],
                 'probability' => [
                     'fraction' => $row['fraction'] ?? null,
@@ -352,38 +367,140 @@ class PhenotypeTranslator
      */
     private function visualCharacteristicsFromStoredText(string $phenotypeText, ?array $record): array
     {
-        $regions = [
-            'pattern' => ['pattern', 'pied', 'misty', 'dilute', 'ino'],
-            'markings' => ['marking', 'cheek', 'collar', 'mask', 'band'],
-            'eyes' => ['eye', 'iris', 'pupil'],
-            'head' => ['head', 'face', 'forehead', 'crown', 'mask'],
-            'body' => ['body', 'breast', 'chest', 'belly', 'abdomen', 'plumage'],
-            'wings' => ['wing', 'flight', 'coverts'],
-            'rump' => ['rump', 'lower back'],
-            'tail' => ['tail', 'rectrix', 'rectrices'],
+        $parsed = $this->parseHeadToTail($phenotypeText);
+
+        $result = [
+            'pattern' => $parsed['pattern'] ?? 'Not specified in stored phenotype record.',
+            'markings' => $parsed['head'] ?? 'Not specified in stored phenotype record.',
+            'eyes' => $parsed['eyes'] ?? 'Not specified in stored phenotype record.',
+            'head' => $parsed['head'] ?? 'Not specified in stored phenotype record.',
+            'neck' => $parsed['neck'] ?? 'Not specified in stored phenotype record.',
+            'body' => $parsed['body'] ?? 'Not specified in stored phenotype record.',
+            'wings' => $parsed['wings'] ?? 'Not specified in stored phenotype record.',
+            'rump' => $parsed['rump'] ?? 'Not specified in stored phenotype record.',
+            'tail' => $parsed['tail'] ?? 'Not specified in stored phenotype record.',
+            'other' => ! empty($record['series'])
+                ? 'Series: '.$record['series'].'. '.$phenotypeText
+                : $phenotypeText,
         ];
 
-        $lower = strtolower($phenotypeText);
-        $result = [];
+        return $result;
+    }
 
-        foreach ($regions as $key => $keywords) {
-            $matched = false;
-            foreach ($keywords as $keyword) {
-                if (str_contains($lower, $keyword)) {
-                    $matched = true;
-                    break;
-                }
-            }
-            $result[$key] = $matched
-                ? $phenotypeText
-                : 'Not specified in stored phenotype record.';
+    /**
+     * @param  array<string, string>  $visual
+     * @param  list<string>  $mutationNames
+     * @return array<string, mixed>|null
+     */
+    private function applyHeadToTailCatalog(array &$visual, mixed $species, array $mutationNames, mixed $baseColor, mixed $sex): ?array
+    {
+        $composed = HeadToTailPhenotypeCatalog::composeForOutcome($species, $mutationNames, $baseColor, $sex);
+        if ($composed === null) {
+            return null;
         }
 
-        $result['other'] = ! empty($record['series'])
-            ? 'Series: '.$record['series'].'. '.$phenotypeText
-            : $phenotypeText;
+        foreach (['eyes', 'head', 'neck', 'body', 'wings', 'rump', 'tail'] as $region) {
+            if (! empty($composed[$region])) {
+                $visual[$region] = $composed[$region];
+            }
+        }
 
-        return $result;
+        return [
+            'eyes' => $composed['eyes'] ?? null,
+            'head' => $composed['head'] ?? null,
+            'neck' => $composed['neck'] ?? null,
+            'body' => $composed['body'] ?? null,
+            'wings' => $composed['wings'] ?? null,
+            'rump' => $composed['rump'] ?? null,
+            'tail' => $composed['tail'] ?? null,
+            'pigment_notes' => $composed['pigment_notes'] ?? null,
+            'species_id' => $composed['species_id'] ?? null,
+            'visual_mutations' => $composed['visual_mutations'] ?? [],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function parseHeadToTail(string $phenotypeText): array
+    {
+        $found = [];
+        $map = [
+            'eye' => 'eyes', 'eyes' => 'eyes',
+            'head' => 'head', 'face' => 'head', 'mask' => 'head', 'forehead' => 'head',
+            'crown' => 'head', 'cheek' => 'head', 'cheeks' => 'head',
+            'neck' => 'neck', 'collar' => 'neck', 'nape' => 'neck',
+            'body' => 'body', 'breast' => 'body', 'chest' => 'body', 'belly' => 'body',
+            'abdomen' => 'body', 'plumage' => 'body',
+            'wing' => 'wings', 'wings' => 'wings',
+            'rump' => 'rump',
+            'tail' => 'tail',
+            'pattern' => 'pattern',
+        ];
+        $part = 'eyes?|head|face|mask|forehead|crown|cheeks?|neck|collar|nape|body|breast|chest|belly|abdomen|plumage|wings?|rump|tail|pattern';
+
+        if (preg_match_all('/\b('.$part.')\s*[:\-]\s*([^,.;]+)/i', $phenotypeText, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $region = $map[strtolower($match[1])] ?? null;
+                $value = $this->tidyRegionValue($match[2], $region);
+                if ($region && $value && ! isset($found[$region])) {
+                    $found[$region] = $value;
+                }
+            }
+        }
+
+        if (preg_match('/\bred eyes\b/i', $phenotypeText) === 1) {
+            $found['eyes'] ??= 'Red';
+        }
+        if (preg_match('/\bdark eyes\b/i', $phenotypeText) === 1) {
+            $found['eyes'] ??= 'Dark';
+        }
+        if (preg_match('/\b(red|dark|pale|brown)[-\s]?eyed\b/i', $phenotypeText, $eyed) === 1) {
+            $found['eyes'] ??= ucfirst(strtolower($eyed[1]));
+        }
+
+        if (preg_match_all('/\b([A-Za-z][A-Za-z-]*(?:\s+[A-Za-z][A-Za-z-]*){0,2})\s+('.$part.')\b/i', $phenotypeText, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $first = strtolower(explode(' ', trim($match[1]))[0] ?? '');
+                if (in_array($first, ['the', 'a', 'an', 'this', 'that', 'same', 'one', 'two', 'not', 'no', 'its', 'their'], true)) {
+                    continue;
+                }
+                $region = $map[strtolower($match[2])] ?? null;
+                $value = $this->tidyRegionValue($match[1].' '.$match[2], $region);
+                if ($region && $value && ! isset($found[$region])) {
+                    $found[$region] = $value;
+                }
+            }
+        }
+
+        return $found;
+    }
+
+    private function tidyRegionValue(string $raw, ?string $region): ?string
+    {
+        $value = trim(preg_replace('/\s+/', ' ', $raw) ?? '');
+        $value = rtrim($value, '.,;:');
+        if ($value === '') {
+            return null;
+        }
+        if ($region) {
+            $tokens = match ($region) {
+                'eyes' => 'eyes|eye',
+                'head' => 'head|face|mask|forehead|crown|cheeks|cheek',
+                'neck' => 'neck|collar|nape',
+                'body' => 'body|breast|chest|belly|abdomen|plumage',
+                'wings' => 'wings|wing',
+                'rump' => 'rump',
+                'tail' => 'tail',
+                default => $region,
+            };
+            $value = trim((string) preg_replace('/\s+('.$tokens.')$/i', '', $value));
+        }
+        if ($value === '' || strlen($value) > 48) {
+            return null;
+        }
+
+        return ucfirst($value);
     }
 
     /**

@@ -5,6 +5,17 @@ import './SearchableSelect.css'
 const PREVIEW_WIDTH = 300
 const PREVIEW_HEIGHT = 300
 
+function optionBlock(option, isOptionDisabled) {
+  if (!option || typeof isOptionDisabled !== 'function') {
+    return { blocked: false, reason: '' }
+  }
+
+  const result = isOptionDisabled(option)
+  if (result === true) return { blocked: true, reason: '' }
+  if (typeof result === 'string' && result.trim()) return { blocked: true, reason: result.trim() }
+  return { blocked: false, reason: '' }
+}
+
 function placePreviewBeside(menuRect, optionRect) {
   const gap = 8
   const pad = 8
@@ -221,7 +232,11 @@ export default function SearchableSelect({
   }
 
   const selectItem = (item) => {
-    if (item.option && isOptionDisabled?.(item.option)) return
+    const block = optionBlock(item.option, isOptionDisabled)
+    const alreadySelected = multiple
+      && item.value !== null
+      && selectedValues.some((id) => String(id) === String(item.value))
+    if (block.blocked && !alreadySelected) return
 
     if (!multiple) {
       onChange(item.value)
@@ -340,7 +355,8 @@ export default function SearchableSelect({
                     : selectedValues.some((id) => String(id) === String(item.value))
                   : (item.value === null && (value === null || value === '' || value === undefined)) ||
                     String(item.value) === String(value)
-                const isDisabled = Boolean(item.option && isOptionDisabled?.(item.option))
+                const block = optionBlock(item.option, isOptionDisabled)
+                const isDisabled = block.blocked && !isSelected
 
                 return (
                   <li key={item.key}>
@@ -351,6 +367,7 @@ export default function SearchableSelect({
                       aria-selected={isSelected}
                       aria-disabled={isDisabled}
                       disabled={isDisabled}
+                      title={block.reason || undefined}
                       className={`search-select__option${isSelected ? ' is-selected' : ''}${
                         index === activeIndex ? ' is-active' : ''
                       }${isDisabled ? ' is-disabled' : ''}`}
@@ -366,7 +383,12 @@ export default function SearchableSelect({
                       onBlur={hidePreviewSoon}
                       onClick={() => selectItem(item)}
                     >
-                      <span className="search-select__option-label">{item.label}</span>
+                      <span className="search-select__option-copy">
+                        <span className="search-select__option-label">{item.label}</span>
+                        {block.reason ? (
+                          <span className="search-select__option-note">{block.reason}</span>
+                        ) : null}
+                      </span>
                       <span
                         className={`search-select__mark${isSelected ? ' is-on' : ''}`}
                         aria-hidden="true"

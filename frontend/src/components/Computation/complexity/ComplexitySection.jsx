@@ -53,8 +53,8 @@ export default function ComplexitySection({ mode, report, proves }) {
 
   return (
     <section className="compute-result__card compute-section-panel">
-      <p className="compute-result__eyebrow">{report.method} · derived from this pair’s stored calculations</p>
-      <h2>{isTime ? 'Time Complexity' : 'Space Complexity'}</h2>
+      <p className="compute-result__eyebrow">Step 08 · {report.method} · counted from this stored run</p>
+      <h2>{isTime ? 'Time complexity' : 'Space complexity'}</h2>
       {proves ? (
         <p className="compute-proves">
           <span className="compute-proves__label">What this proves</span>

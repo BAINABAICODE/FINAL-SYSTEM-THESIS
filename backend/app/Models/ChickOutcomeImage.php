@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToAccount;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ChickOutcomeImage extends Model
 {
+    use BelongsToAccount;
+
     protected $fillable = [
         'signature',
         'egg_number',

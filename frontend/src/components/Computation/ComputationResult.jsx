@@ -1,7 +1,8 @@
-import { forwardRef, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import api from '../../api/client'
 import { generateAllChickImages, generateChickImage } from '../../services/huggingFaceService'
 import { speciesImages } from '../../assets/birds'
+import PanelistProcessBrief from './PanelistProcessBrief'
 import ComplexitySection from './complexity/ComplexitySection'
 import CompatibilitySummary from './compatibility/CompatibilitySummary'
 import WeightedFormula from './compatibility/WeightedFormula'
@@ -10,85 +11,90 @@ import SpeciesCompatibilityPanel from './compatibility/SpeciesCompatibilityPanel
 import ParentGeneticProfile from './compatibility/ParentGeneticProfile'
 import RbgiaPipeline from './inheritance/RbgiaPipeline'
 import RbgiaSummary from './inheritance/RbgiaSummary'
+import AlleleTranslation from './inheritance/AlleleTranslation'
+import PunnettSquare from './inheritance/PunnettSquare'
+import PhenotypeMap from './inheritance/PhenotypeMap'
+import PairInheritanceBoard from './inheritance/PairInheritanceBoard'
 import ClutchSimulationPanel from './outcomes/ClutchSimulationPanel'
 import { eggStatusShort, eggStatusTone, isLivingEgg } from './outcomes/eggStatus'
 import { StatusPill } from './shared/primitives'
-import { buildCompatibilityModel, buildComplexityReport, buildRbgiaTrace } from '../../services/genetics'
+import { attachHeadToTail, buildCompatibilityModel, buildComplexityReport, buildRbgiaTrace, translateGenotype } from '../../services/genetics'
 import '../Breeding/BreedingWorkflow.css'
 import './CompatibilityModule.css'
 import './ComputationResult.css'
 
 const RESULT_SECTIONS = [
   {
-    id: 'flow',
+    id: 'compatibility',
     n: '01',
-    group: 'ga',
-    label: 'Computational Flow',
-    hint: 'GA · RBGIA · GICA',
-    proves: 'How this pairing was evaluated: the selected pair is the candidate, RBGIA simulates inheritance, GICA returns the fitness score.',
+    group: 'input',
+    label: 'Encoded pair',
+    hint: 'What the engines read',
+    proves: 'Why this is first: RBGIA and GICA only read stored phenotype, genotype, visual mutations, and split genes. Missing genotypes stay missing. Looks are not scored.',
   },
   {
-    id: 'final-output',
+    id: 'flow',
     n: '02',
-    group: 'ga',
-    label: 'Recommended Output',
-    hint: 'Fitness result',
-    proves: 'The recommended output of this evaluation: GICA score, why those points were given, and the breeding recommendation.',
-  },
-  {
-    id: 'complexity',
-    n: '03',
-    group: 'ga',
-    label: 'Run Complexity',
-    hint: 'Time and space',
-    proves: 'How much work and memory this evaluation required, counted from stored calculations — not a generic Big-O slide.',
+    group: 'rbgia',
+    label: 'Algorithm',
+    hint: 'Why, then how',
+    proves: 'Why the engines are separate: RBGIA computes inheritance. GICA scores that evidence. The clutch forecast uses the score and never rewrites the Punnett squares.',
   },
   {
     id: 'inheritance',
-    n: '04',
+    n: '03',
     group: 'rbgia',
-    label: 'Inheritance Trace',
-    hint: 'Punnett engine',
-    proves: 'RBGIA encodes parental alleles, forms gametes, expands Punnett squares, and maps genotypes to phenotypes. Same parents always yield the same distribution.',
+    label: 'RBGIA computation',
+    hint: 'Alleles → phenotype',
+    proves: 'How inheritance is computed: translate alleles, form gametes, fill every Punnett box, then map genotype to phenotype. Same parents always give the same boxes.',
   },
   {
     id: 'distribution',
-    n: '05',
+    n: '04',
     group: 'rbgia',
-    label: 'Offspring Distribution',
-    hint: 'Normalized odds',
-    proves: 'The RBGIA probability distribution for this pair: sex, base color, visual mutations, and split genes from stored parental genotypes.',
-  },
-  {
-    id: 'forecast',
-    n: '06',
-    group: 'rbgia',
-    label: 'Reproductive Forecast',
-    hint: 'Separate layer',
-    proves: 'A clutch simulation layered on top of RBGIA. Living chicks sample the unchanged distribution — this layer never edits inheritance math.',
-  },
-  {
-    id: 'compatibility',
-    n: '07',
-    group: 'gica',
-    label: 'Pairing Records',
-    hint: 'GICA inputs',
-    proves: 'The stored species and parent records GICA reads first. Appearance is not used. Missing genotypes are not invented.',
+    label: 'Offspring odds',
+    hint: 'Genotype and phenotype',
+    proves: 'RBGIA output for this pair: sex, base color, visual mutations, split genes, and the joint genotype and phenotype distribution.',
   },
   {
     id: 'gica',
-    n: '08',
+    n: '05',
     group: 'gica',
-    label: 'Compatibility Score',
-    hint: '0–100 fitness',
-    proves: 'How the weighted GICA index was awarded. GICA reads RBGIA as evidence; it never changes inheritance fractions.',
+    label: 'Weight scoring',
+    hint: 'GICA 0–100',
+    proves: 'How the score is weighted: desirable traits, recessive risk, genetic diversity, and mutation load, plus species fit and breeding constraints. Each weight is that factor’s share of 100. GICA does not edit RBGIA fractions.',
+  },
+  {
+    id: 'final-output',
+    n: '06',
+    group: 'gica',
+    label: 'Score and why',
+    hint: 'The decision',
+    proves: 'The numerical GICA score, the points behind it, and the breeding recommendation those weights produced.',
+  },
+  {
+    id: 'forecast',
+    n: '07',
+    group: 'output',
+    label: 'Clutch and hatch',
+    hint: 'Eggs, then chicks',
+    proves: 'Forecasted clutch stays inside the species range and is adjusted by the compatibility score, diversity, and genetic load. Expected hatchlings apply the hatch rate. These are estimates.',
+  },
+  {
+    id: 'complexity',
+    n: '08',
+    group: 'output',
+    label: 'Time and space',
+    hint: 'Work this run did',
+    proves: 'Time grows with offspring outcomes times traits. Space grows with the trait map. The counts are from this stored run.',
   },
 ]
 
 const RESULT_GROUPS = [
-  { id: 'ga', chapter: 'I', label: 'GA · Framework', purpose: 'Evaluate this pairing' },
-  { id: 'rbgia', chapter: 'II', label: 'RBGIA', purpose: 'Offspring probability distribution' },
-  { id: 'gica', chapter: 'III', label: 'GICA', purpose: 'Compatibility score (0–100)' },
+  { id: 'input', chapter: 'I', label: 'Input', purpose: 'Encode the stored pair' },
+  { id: 'rbgia', chapter: 'II', label: 'RBGIA', purpose: 'Compute inheritance' },
+  { id: 'gica', chapter: 'III', label: 'GICA', purpose: 'Weight the pair 0–100' },
+  { id: 'output', chapter: 'IV', label: 'Output', purpose: 'Score, clutch, and work' },
 ]
 
 function getSection(id) {
@@ -96,16 +102,15 @@ function getSection(id) {
 }
 
 function resolveSection(id) {
+  if (!id) return null
   if (id === 'time-complexity' || id === 'space-complexity') return 'complexity'
-  return getSection(id) ? id : 'flow'
+  return getSection(id) ? id : null
 }
 
 function sectionHash(resultId, sectionId) {
   if (!resultId) return '#predictions'
-  const valid = resolveSection(sectionId)
-  return valid === 'flow'
-    ? `#computation/${resultId}`
-    : `#computation/${resultId}/${valid}`
+  const valid = resolveSection(sectionId) || RESULT_SECTIONS[0].id
+  return `#computation/${resultId}/${valid}`
 }
 
 function displayText(value) {
@@ -346,7 +351,7 @@ function ProvesNote({ sectionId }) {
 
 function ResultBlock({ title, children, eyebrow, sectionId }) {
   return (
-    <section className="compute-result__card compute-section-panel">
+    <section id={sectionId ? `process-${sectionId}` : undefined} className="compute-result__card compute-section-panel">
       {eyebrow ? <p className="compute-result__eyebrow">{eyebrow}</p> : null}
       <h2>{title}</h2>
       <ProvesNote sectionId={sectionId} />
@@ -400,9 +405,9 @@ function DistributionPanel({ title, rows, nameResolver, unavailableReason }) {
                 <span className="compute-prob-row__name">{name}</span>
                 <span className="compute-prob-row__pct">{formatPercent(pct)}</span>
               </div>
-              {genotype ? <p className="compute-prob-row__genotype">Genotype: {genotype}</p> : null}
+              {genotype ? <p className="compute-prob-row__genotype">Code: {genotype} · Means: {translateGenotype(genotype, row.locus || row.trait)}</p> : null}
               <ProgressBar percent={pct} tone={index === 0 ? 'high' : 'info'} />
-              {row.fraction ? <p className="compute-prob-row__fraction">{row.fraction}</p> : null}
+              {row.fraction ? <p className="compute-prob-row__fraction">{row.fraction} of all calculated chicks</p> : null}
             </li>
           )
         })}
@@ -413,31 +418,56 @@ function DistributionPanel({ title, rows, nameResolver, unavailableReason }) {
 
 const SECTION_PANEL_ID = 'compute-section-panel'
 
-const SectionNav = forwardRef(function SectionNav({ section, resultId, onChange }, ref) {
+const SectionNav = forwardRef(function SectionNav({ section, resultId, onChange, summary }, ref) {
   const active = getSection(section)
 
   return (
-    <nav ref={ref} className="compute-outline" aria-label="Thesis outline">
+    <nav ref={ref} className="compute-outline" aria-label="Algorithm steps">
       <div className="compute-outline__head">
-        <p className="compute-outline__kicker">How to read this result</p>
-        <p className="compute-outline__title">Thesis outline</p>
+        <p className="compute-outline__kicker">Breeding complete · full process</p>
+        <p className="compute-outline__title">Why this result, then how it was computed</p>
         <p className="compute-outline__lede">
-          Three computational components, left to right. This page is the evaluation of one pairing: RBGIA simulates inheritance, GICA scores the pair, and the framework returns the recommended output.
+          The board above is the full process. These links open the proof for each step: encoded pair, RBGIA computation, offspring odds, GICA weights, the score, the clutch, and the work this run did.
         </p>
       </div>
 
+      {summary ? (
+        <dl className="sop-metrics" aria-label="This run">
+          <div>
+            <dt>Pair</dt>
+            <dd>{summary.parents}</dd>
+          </div>
+          <div>
+            <dt>RBGIA</dt>
+            <dd>{summary.loci} genes · {summary.outcomes} genotypes</dd>
+          </div>
+          <div>
+            <dt>GICA</dt>
+            <dd>{summary.score} · {summary.status}</dd>
+          </div>
+          <div>
+            <dt>Forecast</dt>
+            <dd>{summary.eggs} eggs · {summary.hatchlings} hatchlings</dd>
+          </div>
+        </dl>
+      ) : null}
+
       <ol className="compute-outline__legend">
         <li>
-          <strong>GA · Framework</strong>
-          Evaluates the selected pairing. The GICA score is the fitness value shown to the user.
+          <strong>I · Input</strong>
+          Encode phenotype, genotype, visual mutations, and known splits. Missing genes stay missing.
         </li>
         <li>
-          <strong>RBGIA</strong>
-          Deterministic inheritance engine. Alleles, gametes, Punnett expansion, phenotype distribution.
+          <strong>II · RBGIA</strong>
+          Mendelian and sex-linked rules. Alleles, gametes, Punnett squares, then genotype and phenotype odds.
         </li>
         <li>
-          <strong>GICA</strong>
-          Deterministic weighted score from 0 to 100. It reads RBGIA; it never rewrites it.
+          <strong>III · GICA</strong>
+          Weight desirable traits, recessive risk, diversity, and mutation load into one score from 0 to 100.
+        </li>
+        <li>
+          <strong>IV · Output</strong>
+          The score and why, the clutch inside the species range, expected hatchlings, and the work this run did.
         </li>
       </ol>
 
@@ -483,9 +513,7 @@ const SectionNav = forwardRef(function SectionNav({ section, resultId, onChange 
   )
 })
 
-const STICKY_NAV_GAP = 16
-
-/** Tracks the fixed site header height so the sticky section nav and scroll offset sit below it. */
+/** Tracks the fixed site header height so section anchors sit below it. */
 function useSiteHeaderHeight() {
   const [height, setHeight] = useState(0)
   useEffect(() => {
@@ -571,6 +599,20 @@ function CompatibilityScoreCard({ score, status, summary }) {
       {summary ? <p className="thesis-score-card__summary">{summary}</p> : null}
     </article>
   )
+}
+
+function resultSpeciesId(result, presentation = {}) {
+  const parents = [
+    result?.parent_snapshot?.parent_1,
+    result?.parent_snapshot?.parent_2,
+    presentation?.pair_compatibility?.parent_1,
+    presentation?.pair_compatibility?.parent_2,
+  ]
+  for (const parent of parents) {
+    const id = parent?.species?.id ?? parent?.species_id
+    if (id != null) return id
+  }
+  return null
 }
 
 function parentSpeciesImage(parent) {
@@ -668,12 +710,12 @@ function FinalSystemOutputSection({
 
   return (
     <ResultBlock
-      title="Genetic Pair Compatibility"
-      eyebrow="Chapter I · recommended output of this evaluation"
+      title="Score and why"
+      eyebrow="Step 06 · GICA decision from the weights above"
       sectionId="final-output"
     >
       <p className="compute-read">
-        This is the recommended output of the evaluation. GICA produced the fitness score. RBGIA produced the supporting offspring distribution. Later chapters show each engine separately.
+        This is the decision. The sections above are the computation: encoded parents, the RBGIA walk, the offspring odds, and the GICA weights. This block shows the score those weights produced and why the points landed where they did.
       </p>
       <p className="thesis-thesis-line">
         {pair?.thesis_statement || 'Genetic Pair Compatibility Analysis of lovebird pair compatibility using rule-based genetic inheritance (GICA + RBGIA).'}
@@ -1048,83 +1090,144 @@ function ComputationalFlowSection({
   const parent1 = parentSnapshot?.parent_1?.bird_id || pair?.parent_1?.bird_id || 'Parent 1'
   const parent2 = parentSnapshot?.parent_2?.bird_id || pair?.parent_2?.bird_id || 'Parent 2'
 
+  const featuredLocus = rbgiaTrace?.loci?.find((locus) => locus.square?.valid) || rbgiaTrace?.loci?.[0] || null
+  const appearanceRows = (rbgiaTrace?.appearanceOutcomes || []).map((row) => ({
+    ...row,
+    trait: row.label,
+    probability: row.probability,
+    fraction: row.fraction,
+  }))
+
   return (
     <ResultBlock
-      title="Computational Flow"
-      eyebrow="Chapter I · GA evaluation of one candidate pairing"
+      title="How the algorithm ran"
+      eyebrow="Step 02 · why the engines are separate, then the order they ran"
       sectionId="flow"
     >
       <p className="compute-read">
-        The system uses three computational components. The Genetic Algorithm is the outer evaluation framework.
-        On this page the candidate is the pairing already taken from the bird registry. RBGIA simulates Mendelian
-        and chromosomal inheritance. GICA returns a weighted compatibility score that is the fitness value of this pairing.
-        Population-level selection, crossover, and mutation are not executed when both parents are already chosen.
+        RBGIA and GICA stay separate so the inheritance math can be checked on its own.
+        RBGIA applies Mendelian segregation, independent assortment, and sex-linked chromosomal rules.
+        GICA then weights those outcomes. Both parents are already chosen, so this run does not search a population.
+        The full squares, odds, weights, score, clutch, and complexity follow on this page.
       </p>
+
+      <ol className="algo-process" aria-label="Algorithm process for this pair">
+        <li>
+          <span className="algo-process__n">1</span>
+          <div>
+            <p className="algo-process__label">Encode the pair</p>
+            <p><strong>{parent1}</strong> × <strong>{parent2}</strong>. Phenotype, genotype, visual mutations, and known splits are read from stored records.</p>
+            <p className="algo-process__why">Why: later steps cannot invent a genotype that was never stored.</p>
+          </div>
+        </li>
+        <li>
+          <span className="algo-process__n">2</span>
+          <div>
+            <p className="algo-process__label">Translate alleles</p>
+            <p>Each stored code is read as normal (+) or mutation. W means no gene on that side.</p>
+            <p className="algo-process__why">Why: the Punnett square needs symbols, not only the color name a breeder sees.</p>
+          </div>
+        </li>
+        <li>
+          <span className="algo-process__n">3</span>
+          <div>
+            <p className="algo-process__label">Build gametes</p>
+            <p>Each parent passes one allele per gene. Heterozygotes split 50 / 50. Sex-linked genes follow the Z chromosome.</p>
+            <p className="algo-process__why">Why: this is the Law of Segregation, including chromosomal sex-linkage.</p>
+          </div>
+        </li>
+        <li>
+          <span className="algo-process__n">4</span>
+          <div>
+            <p className="algo-process__label">Punnett square</p>
+            <p>Every cock allele is crossed with every hen allele. Method {method}.</p>
+            <p className="algo-process__why">Why: the same parents must always fill the same boxes. That is the determinism check.</p>
+          </div>
+        </li>
+        <li>
+          <span className="algo-process__n">5</span>
+          <div>
+            <p className="algo-process__label">Count gene odds</p>
+            <p>{loci} genes · {outcomes} chick genotypes. Visible looks and hidden splits are totaled from those boxes.</p>
+            <p className="algo-process__why">Why: GICA needs probabilities. It does not roll a random clutch and call that the inheritance.</p>
+          </div>
+        </li>
+        <li>
+          <span className="algo-process__n">6</span>
+          <div>
+            <p className="algo-process__label">Weight the pair</p>
+            <p>{gicaScore == null ? '—' : `${Math.round(gicaScore)} / 100`} · {status}. Desirable traits, recessive risk, diversity, and mutation load, plus species fit and breeding constraints.</p>
+            <p className="algo-process__why">Why: one score has to show which factor gave or withheld points. RBGIA fractions stay unchanged.</p>
+          </div>
+        </li>
+        <li>
+          <span className="algo-process__n">7</span>
+          <div>
+            <p className="algo-process__label">Forecast eggs and hatchlings</p>
+            <p>The species clutch range is adjusted by the score, diversity, and genetic load. Hatchlings apply the stored hatch rate.</p>
+            <p className="algo-process__why">Why: clutch size is not a fixed number of chicks. The forecast is an estimate, not a promised nest.</p>
+          </div>
+        </li>
+      </ol>
 
       <div className="gx-table-wrap">
         <table className="gx-table compute-flow-table">
           <caption className="gx-visually-hidden">Computational components used on this result</caption>
           <thead>
             <tr>
-              <th scope="col">Component</th>
-              <th scope="col">Role</th>
-              <th scope="col">Nature</th>
-              <th scope="col">This result</th>
+              <th scope="col">Engine</th>
+              <th scope="col">What it does</th>
+              <th scope="col">Kind</th>
+              <th scope="col">This pair</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <th scope="row">GA · Framework</th>
-              <td>Outer evaluation of the selected pairing</td>
+              <th scope="row">Framework</th>
+              <td>Evaluates the selected pairing</td>
               <td>Single-pair run · {method}</td>
-              <td>Recommended output for {parent1} × {parent2}</td>
+              <td>{parent1} × {parent2}</td>
             </tr>
             <tr>
               <th scope="row">RBGIA</th>
-              <td>Inheritance simulation</td>
-              <td>Deterministic, rule-based</td>
-              <td>{loci} loci · {outcomes} joint offspring genotypes</td>
+              <td>Walks inheritance for every stored gene</td>
+              <td>Rule-based, same input → same odds</td>
+              <td>{loci} genes · {outcomes} chick genotypes</td>
             </tr>
             <tr>
               <th scope="row">GICA</th>
-              <td>Compatibility scoring</td>
-              <td>Deterministic, weighted linear combination</td>
+              <td>Scores whether the pair should be bred</td>
+              <td>Weighted 0–100 index</td>
               <td>{gicaScore == null ? '—' : `${Math.round(gicaScore)} / 100`} · {status}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <ol className="compute-pipeline" aria-label="Computation pipeline for this pair">
-        <li>
-          <span className="compute-pipeline__n">1</span>
-          <div>
-            <p className="compute-pipeline__label">Initialize candidate</p>
-            <p>The chromosome is this pairing from the registry: <strong>{parent1}</strong> × <strong>{parent2}</strong>.</p>
-          </div>
-        </li>
-        <li>
-          <span className="compute-pipeline__n">2</span>
-          <div>
-            <p className="compute-pipeline__label">RBGIA evaluation</p>
-            <p>Encode stored alleles → form gametes → Punnett expansion → map genotypes to phenotypes → normalize the offspring distribution.</p>
-          </div>
-        </li>
-        <li>
-          <span className="compute-pipeline__n">3</span>
-          <div>
-            <p className="compute-pipeline__label">GICA fitness</p>
-            <p>Score the pair from six fixed factors (species, inheritance information, mutation compatibility, genetic risk, genetic diversity, breeding constraints) into 0–100.</p>
-          </div>
-        </li>
-        <li>
-          <span className="compute-pipeline__n">4</span>
-          <div>
-            <p className="compute-pipeline__label">Recommended output</p>
-            <p>{pair?.recommendation || gica?.recommendation || 'The GICA classification and recommendation are presented as the result of this evaluation.'}</p>
-          </div>
-        </li>
-      </ol>
+      {rbgiaTrace?.loci?.length ? <AlleleTranslation loci={rbgiaTrace.loci} title="Allele translation for this pair" /> : null}
+
+      {featuredLocus?.square?.valid ? (
+        <div className="algo-punnett">
+          <header>
+            <p className="compute-result__eyebrow">Featured Punnett square</p>
+            <h3>{featuredLocus.name}</h3>
+            <p>Cock alleles down the side. Hen alleles across the top. Each box is one possible chick at this gene.</p>
+          </header>
+          <PunnettSquare locus={featuredLocus} />
+        </div>
+      ) : null}
+
+      {appearanceRows.length ? (
+        <DistributionPanel
+          title="Visible gene distribution"
+          rows={appearanceRows}
+          nameResolver={(row) => row.label || row.trait}
+        />
+      ) : null}
+
+      <p className="compute-read">
+        {pair?.recommendation || gica?.recommendation || 'Open Pair result for the full GICA recommendation, or Punnett walk for every gene.'}
+      </p>
     </ResultBlock>
   )
 }
@@ -1167,13 +1270,13 @@ function CompatibilitySection({ result }) {
 
   return (
     <ResultBlock
-      title="Species Compatibility"
-      eyebrow="Chapter III · GICA inputs from stored records"
+      title="Encoded pair"
+      eyebrow="Step 01 · Input the engines are allowed to read"
       sectionId="compatibility"
     >
       <p className="compute-read">
-        GICA reads these pairing records first: species compatibility and the captured parental fields.
-        Appearance is not used. Missing genotypes stay missing. The species factor of the 100-point index is taken from this record.
+        This is the input phase. Phenotype, genotype, visual mutations, and known split or carrier genes are taken from the stored parent records.
+        Appearance is not scored. A missing genotype stays missing. The species factor in the GICA weight table is taken from this record.
       </p>
       <div className="gx-module compute-chapter">
         <SpeciesCompatibilityPanel species={model.species} />
@@ -1197,13 +1300,14 @@ function GicaSection({ result, gica, gicaScore, rbgiaTrace }) {
 
   return (
     <ResultBlock
-      title="GICA — Genetic Inheritance Compatibility Analysis"
-      eyebrow="Chapter III · weighted compatibility score (0–100)"
+      title="GICA weight scoring"
+      eyebrow="Step 05 · how the 0–100 score is weighted"
       sectionId="gica"
     >
       <p className="compute-read">
-        GICA is the deterministic scoring engine. It awards points from six fixed factors and sums them to a single score between 0 and 100.
-        That score is the fitness value of this pairing. GICA may read the RBGIA distribution as evidence. It never recalculates or overwrites inheritance probabilities.
+        GICA turns the RBGIA odds into one score. Each factor has a fixed maximum. That maximum is its weight: points earned divided by the maximum, then summed to a score from 0 to 100.
+        The factors cover desirable trait inheritance, recessive risk, genetic diversity, mutation or genetic load, species fit, and breeding constraints.
+        GICA may read the RBGIA gene odds as evidence. It never changes those odds.
       </p>
       <dl className="compute-glossary">
         <div>
@@ -1235,7 +1339,7 @@ function GicaSection({ result, gica, gicaScore, rbgiaTrace }) {
   )
 }
 
-function GeneticDistributionSection({ probabilities, eggs, exampleNote }) {
+function GeneticDistributionSection({ probabilities, eggs, exampleNote, rbgiaTrace }) {
   const phenotypeRows = (probabilities.phenotype || []).length
     ? probabilities.phenotype
     : eggs.map((egg) => ({
@@ -1269,11 +1373,12 @@ function GeneticDistributionSection({ probabilities, eggs, exampleNote }) {
   }
 
   return (
-    <ResultBlock title="Offspring Distribution" eyebrow="Chapter II · RBGIA normalized probability distribution" sectionId="distribution">
+    <ResultBlock title="Offspring odds" eyebrow="Step 04 · RBGIA genotype and phenotype output" sectionId="distribution">
       <p className="compute-read">
-        RBGIA has already encoded parental alleles, formed gametes, and expanded Punnett squares. This panel is the normalized
-        offspring distribution: sex, base color, visual mutations, and split genes. Missing loci stay unavailable instead of being filled in.
+        These are the inheritance results GICA scores against. The table is gene by gene: cock allele, hen allele, and the chick odds.
+        The panels group the same joint outcomes by sex, base color, visual mutations, and hidden splits.
       </p>
+      <PairInheritanceBoard trace={rbgiaTrace} probabilities={probabilities} />
       {probabilities.message ? <p className="compute-result__empty">{probabilities.message}</p> : null}
       <p className="compute-dist-legend">
         All panels are aggregated from the same joint offspring genotype set.
@@ -1303,9 +1408,9 @@ function GeneticDistributionSection({ probabilities, eggs, exampleNote }) {
         />
       </div>
 
-      <h3 className="compute-dist-complete-title">Complete Offspring Distribution</h3>
+      <h3 className="compute-dist-complete-title">Every calculated chick type</h3>
       <p className="compute-dist-legend">
-        Every unique calculated genotype/phenotype combination from the selected parents.
+        Each card is one unique sex + look + hidden-split combination from the Punnett walk.
       </p>
       {(complete || []).length ? (
         <div className="compute-dist-complete-grid">
@@ -1323,8 +1428,10 @@ function GeneticDistributionSection({ probabilities, eggs, exampleNote }) {
                   <div><dt>Visual Mutations</dt><dd>{listOrDash(row.visual_mutations)}</dd></div>
                   <div><dt>Split / Hidden Genes</dt><dd>{listOrDash(row.split_hidden_genes)}</dd></div>
                   <div><dt>Genotype</dt><dd>{displayText(row.genotype)}</dd></div>
+                  <div><dt>Means</dt><dd>{translateGenotype(row.genotype, row.base_color)}</dd></div>
                   <div><dt>Phenotype</dt><dd>{displayText(row.phenotype)}</dd></div>
                 </dl>
+                <PhenotypeMap source={row} />
                 <ProgressBar percent={pct} tone={index === 0 ? 'high' : 'info'} />
                 {row.fraction ? <p className="compute-prob-row__fraction">{row.fraction}</p> : null}
               </article>
@@ -1358,14 +1465,14 @@ function ForecastSection({ forecast, species, eggs, clutchSimulation }) {
 
   return (
     <ResultBlock
-      title="Reproductive Forecast"
-      eyebrow={clutchSimulation ? 'Chapter II · separate clutch layer — not RBGIA inheritance math' : 'Chapter II · biological forecast from stored records'}
+      title="Clutch and hatchlings"
+      eyebrow="Step 07 · species range, adjusted by the GICA score"
       sectionId="forecast"
     >
       <p className="compute-read">
         {clutchSimulation
-          ? 'RBGIA does not simulate a nest. This clutch layer is separate. Living chicks sample the unchanged RBGIA distribution. Eggs that fail have no genotype — nothing is invented for them.'
-          : 'These forecast figures come only from stored breeding-safety records. Missing biological values are not invented.'}
+          ? 'The forecast starts from the species clutch range, then moves inside that range using the compatibility score, genetic diversity, and mutation or genetic load. Expected hatchlings apply the hatch rate. Living chick cards sample the unchanged RBGIA odds. Eggs that fail have no genotype.'
+          : 'These forecast figures come from the species reproductive range and the compatibility assessment. Missing biological values are not invented. Expected hatchlings apply the stored hatch rate to the forecasted eggs.'}
       </p>
       {clutchSimulation ? <ClutchSimulationPanel simulation={clutchSimulation} eggs={eggs} /> : null}
       <div className="compute-summary__grid compute-summary__grid--forecast">
@@ -1413,7 +1520,7 @@ function ForecastSection({ forecast, species, eggs, clutchSimulation }) {
   )
 }
 
-function InheritanceSection({ inherited, report, eggs, rbgiaTrace }) {
+function InheritanceSection({ inherited, report, eggs, rbgiaTrace, probabilities = {} }) {
   const parent1Badges = parseTraitBadges(inherited.traits_from_parent_1)
   const parent2Badges = parseTraitBadges(inherited.traits_from_parent_2)
   const topEgg = eggs[0]
@@ -1421,15 +1528,16 @@ function InheritanceSection({ inherited, report, eggs, rbgiaTrace }) {
 
   return (
     <ResultBlock
-      title="Inheritance Trace"
-      eyebrow="Chapter II · RBGIA encoding, gametes, Punnett, phenotype mapping"
+      title="RBGIA computation"
+      eyebrow="Step 03 · alleles, gametes, Punnett squares, phenotype"
       sectionId="inheritance"
     >
       <p className="compute-read">
-        RBGIA is the deterministic simulation engine. It encodes each parent’s stored alleles per locus, generates the gametes each parent can contribute,
-        combines them through Punnett expansion, then maps each genotype to a documented phenotype. The same parental input always yields the same distribution.
-        GICA does not edit this walk.
+        This is the inheritance computation. Every stored gene is walked in the same order: translate the alleles, form gametes, fill the Punnett square, map the genotype to a phenotype, then total the odds.
+        Dominant, recessive, and sex-linked genes each follow their own rule. Same parents always give the same boxes. GICA does not edit this walk.
       </p>
+      <PairInheritanceBoard trace={trace} probabilities={probabilities} title="Parent alleles → chick odds" />
+      {trace?.loci?.length ? <AlleleTranslation loci={trace.loci} title="Allele translation" /> : null}
       <div className="compute-inherit-flow">
         <article className="compute-inherit-card">
           <h3>Parent 1 Contribution</h3>
@@ -1515,7 +1623,7 @@ function InheritanceSection({ inherited, report, eggs, rbgiaTrace }) {
 
       {trace?.loci?.length ? (
         <div className="gx-module compute-chapter">
-          <h3>Per-locus Punnett trace</h3>
+          <h3>Every gene · Punnett square and odds</h3>
           <RbgiaPipeline loci={trace.loci} />
           <h3>RBGIA summary for this pair</h3>
           <RbgiaSummary trace={trace} />
@@ -1708,8 +1816,8 @@ function LivingChickCard({ egg, computationResultId, onEggUpdated }) {
             <div><dt>Visual Mutations</dt><dd>{listOrDash(egg.collected_traits?.visual_mutations || egg.visual_mutations)}</dd></div>
             <div><dt>Split/Hidden Genes</dt><dd>{listOrDash(egg.collected_traits?.split_hidden_genes || egg.split_hidden_genes || egg.split_genes)}</dd></div>
             <div><dt>Genotype</dt><dd>{displayText(egg.genotype_display || egg.genotype)}</dd></div>
-            <div><dt>Phenotype</dt><dd>{displayText(egg.phenotype)}</dd></div>
           </dl>
+          <PhenotypeMap source={egg} />
           {pct != null ? (
             <div className="compute-prob-row" style={{ marginTop: '0.75rem' }}>
               <div className="compute-prob-row__head">
@@ -1737,52 +1845,56 @@ export default function ComputationResult({ resultId, sectionId }) {
   const [area, setArea] = useState('dashboard')
   const [section, setSection] = useState(() => resolveSection(sectionId))
   const [eggsOverride, setEggsOverride] = useState(null)
+  const [headToTailCatalog, setHeadToTailCatalog] = useState(null)
   const [generatingAll, setGeneratingAll] = useState(false)
   const [generateAllMessage, setGenerateAllMessage] = useState('')
   const sectionNavRef = useRef(null)
-  const sectionStageRef = useRef(null)
-  const pendingSectionScrollRef = useRef(false)
   const siteHeaderHeight = useSiteHeaderHeight()
 
-  const scrollStageBelowNav = useCallback(() => {
-    const stage = sectionStageRef.current
-    if (!stage) return
-    const nav = sectionNavRef.current
-    const navHeight = nav?.getBoundingClientRect().height ?? 0
-    const navStickyTop = nav ? parseFloat(getComputedStyle(nav).top) || 0 : siteHeaderHeight
-    const stickyOffset = navStickyTop + navHeight + STICKY_NAV_GAP
-    const stageTop = stage.getBoundingClientRect().top
-    if (stageTop >= stickyOffset - 1) return
-    window.scrollTo({ top: Math.max(0, window.scrollY + stageTop - stickyOffset), behavior: 'smooth' })
-  }, [siteHeaderHeight])
-
   const handleSectionChange = useCallback((nextSection, event) => {
-    const resolved = resolveSection(nextSection)
-    if (resolved === section) {
-      event?.preventDefault()
-      scrollStageBelowNav()
-      return
-    }
     event?.preventDefault()
-    pendingSectionScrollRef.current = true
+    const resolved = resolveSection(nextSection)
+    if (!resolved) return
     setSection(resolved)
     const nextHash = sectionHash(resultId, resolved)
     const currentHash = `#${window.location.hash.replace(/^#/, '')}`
-    if (currentHash !== nextHash) {
-      window.location.hash = nextHash
+    if (currentHash === nextHash) {
+      document.getElementById(`process-${resolved}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
     }
-  }, [resultId, section, scrollStageBelowNav])
-
-  useLayoutEffect(() => {
-    if (!pendingSectionScrollRef.current) return
-    pendingSectionScrollRef.current = false
-    scrollStageBelowNav()
-  }, [section, scrollStageBelowNav])
+    window.location.hash = nextHash
+  }, [resultId])
 
   useEffect(() => {
     const resolved = resolveSection(sectionId)
-    setSection((current) => (current === resolved ? current : resolved))
-  }, [sectionId])
+    if (!resolved || !result) return undefined
+    setSection(resolved)
+    const node = document.getElementById(`process-${resolved}`)
+    if (!node) return undefined
+    const frame = window.requestAnimationFrame(() => {
+      node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [result, sectionId])
+
+  useEffect(() => {
+    if (!result || area !== 'dashboard') return undefined
+    const nodes = RESULT_SECTIONS
+      .map((item) => document.getElementById(`process-${item.id}`))
+      .filter(Boolean)
+    if (!nodes.length || typeof IntersectionObserver === 'undefined') return undefined
+    const observer = new IntersectionObserver((entries) => {
+      const hit = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
+      if (!hit) return
+      const id = hit.target.id.replace(/^process-/, '')
+      if (!getSection(id)) return
+      setSection((current) => (current === id ? current : id))
+    }, { rootMargin: '-12% 0px -68% 0px', threshold: 0.01 })
+    nodes.forEach((node) => observer.observe(node))
+    return () => observer.disconnect()
+  }, [result, area])
 
   useEffect(() => {
     let active = true
@@ -1799,6 +1911,14 @@ export default function ComputationResult({ resultId, sectionId }) {
       .catch(() => {
         if (active) setError('This computation result could not be loaded.')
       })
+    api
+      .get('/head-to-tail-phenotypes')
+      .then((response) => {
+        if (active) setHeadToTailCatalog(response.data?.data || null)
+      })
+      .catch(() => {
+        if (active) setHeadToTailCatalog(null)
+      })
     return () => {
       active = false
     }
@@ -1810,10 +1930,19 @@ export default function ComputationResult({ resultId, sectionId }) {
   const pair = presentation.pair_compatibility || {}
   const probabilities = presentation.probabilities || {}
   const forecast = presentation.reproductive_forecast || {}
-  const eggs = useMemo(
-    () => eggsOverride || presentation.egg_chick_examples || result?.egg_outcomes || [],
-    [eggsOverride, presentation.egg_chick_examples, result?.egg_outcomes],
-  )
+  const speciesId = useMemo(() => resultSpeciesId(result, presentation), [result, presentation])
+  const eggs = useMemo(() => {
+    const raw = eggsOverride || presentation.egg_chick_examples || result?.egg_outcomes || []
+    if (!headToTailCatalog) return raw
+    return raw.map((egg) => attachHeadToTail(egg, headToTailCatalog, speciesId))
+  }, [eggsOverride, presentation.egg_chick_examples, result?.egg_outcomes, headToTailCatalog, speciesId])
+  const enrichedProbabilities = useMemo(() => {
+    if (!headToTailCatalog || !probabilities.complete_offspring) return probabilities
+    return {
+      ...probabilities,
+      complete_offspring: probabilities.complete_offspring.map((row) => attachHeadToTail(row, headToTailCatalog, speciesId)),
+    }
+  }, [probabilities, headToTailCatalog, speciesId])
   const clutchSimulation = presentation.clutch_simulation || null
   const livingEggs = useMemo(() => eggs.filter(isLivingEgg), [eggs])
   const inherited = presentation.inherited_traits || {}
@@ -1823,6 +1952,19 @@ export default function ComputationResult({ resultId, sectionId }) {
 
   const gicaScore = typeof gica.score === 'number' ? gica.score : (typeof pair.score === 'number' ? pair.score : null)
   const rbgiaTrace = useMemo(() => (result ? buildRbgiaTrace(result) : null), [result])
+  const runSummary = useMemo(() => {
+    const parent1 = result?.parent_snapshot?.parent_1?.bird_id || pair?.parent_1?.bird_id || 'Parent 1'
+    const parent2 = result?.parent_snapshot?.parent_2?.bird_id || pair?.parent_2?.bird_id || 'Parent 2'
+    return {
+      parents: `${parent1} × ${parent2}`,
+      loci: rbgiaTrace?.loci?.length ?? algorithm?.loci_processed ?? '—',
+      outcomes: rbgiaTrace?.summary?.totalOutcomes ?? '—',
+      score: gicaScore == null ? '—' : `${Math.round(gicaScore)} / 100`,
+      status: gicaStatusLabel(pair?.label || gica.label, gicaScore),
+      eggs: forecastIsDocumented(forecast.estimated_eggs) ? String(forecast.estimated_eggs) : 'Not documented',
+      hatchlings: forecastIsDocumented(forecast.estimated_hatchlings) ? String(forecast.estimated_hatchlings) : 'Not documented',
+    }
+  }, [result, pair, gica, gicaScore, rbgiaTrace, algorithm, forecast])
   const complexityReport = useMemo(
     () => (result ? buildComplexityReport(result, rbgiaTrace) : null),
     [result, rbgiaTrace],
@@ -1867,11 +2009,11 @@ export default function ComputationResult({ resultId, sectionId }) {
       <div className="breed__shell compute-result__shell">
         <header className="compute-result__header">
           <div>
-            <p className="compute-result__eyebrow">Thesis computation · GA evaluation via RBGIA + GICA</p>
-            <h1>Lovebird Pair Compatibility Analysis</h1>
+            <p className="compute-result__eyebrow">Breeding complete</p>
+            <h1>Lovebird pair compatibility</h1>
             <p className="compute-result__lede">
-              This result is one candidate pairing. RBGIA simulates inheritance. GICA scores the pair from 0 to 100.
-              Follow the outline: framework first, RBGIA second, GICA third.
+              The opening board is what panelists review first: why the result exists, how RBGIA computed it, how GICA weighted it, and every required output.
+              The chapters under the board are the proof. Chick pictures stay on the second tab.
             </p>
           </div>
           {result ? (
@@ -1883,7 +2025,7 @@ export default function ComputationResult({ resultId, sectionId }) {
                 className={`compute-result__tab${area === 'dashboard' ? ' is-active' : ''}`}
                 onClick={() => setArea('dashboard')}
               >
-                Pair Compatibility Result
+                Full process
               </button>
               <button
                 type="button"
@@ -1892,7 +2034,7 @@ export default function ComputationResult({ resultId, sectionId }) {
                 className={`compute-result__tab${area === 'eggs' ? ' is-active' : ''}`}
                 onClick={() => setArea('eggs')}
               >
-                Egg / Chick Evidence{eggs.length ? ` (${eggs.length}${clutchSimulation ? ` eggs · ${livingEggs.length} chicks` : ''})` : ''}
+                Eggs and chicks{eggs.length ? ` (${eggs.length}${clutchSimulation ? ` eggs · ${livingEggs.length} chicks` : ''})` : ''}
               </button>
             </div>
           ) : null}
@@ -1903,58 +2045,65 @@ export default function ComputationResult({ resultId, sectionId }) {
 
         {result && area === 'dashboard' ? (
           <>
-            <SectionNav ref={sectionNavRef} section={section} resultId={resultId} onChange={handleSectionChange} />
-            <div
-              ref={sectionStageRef}
-              id={SECTION_PANEL_ID}
-              className="compute-section-stage"
-              key={section}
-              aria-labelledby={`compute-tab-${section}`}
-              tabIndex={-1}
-            >
-              {section === 'flow' ? (
-                <ComputationalFlowSection
-                  pair={pair}
-                  gica={gica}
-                  gicaScore={gicaScore}
-                  rbgiaTrace={rbgiaTrace}
-                  algorithm={algorithm}
-                  parentSnapshot={result?.parent_snapshot}
-                />
-              ) : null}
-              {section === 'final-output' ? (
-                <FinalSystemOutputSection
-                  pair={pair}
-                  species={species}
-                  gica={gica}
-                  gicaScore={gicaScore}
-                  probabilities={probabilities}
-                  eggs={livingEggs}
-                  confidence={confidence}
-                  parentSnapshot={result?.parent_snapshot}
-                />
-              ) : null}
-              {section === 'compatibility' ? (
-                <CompatibilitySection result={result} />
-              ) : null}
-              {section === 'gica' ? (
-                <GicaSection result={result} gica={gica} gicaScore={gicaScore} rbgiaTrace={rbgiaTrace} />
-              ) : null}
-              {section === 'distribution' ? (
-                <GeneticDistributionSection
-                  probabilities={probabilities}
-                  eggs={livingEggs}
-                  exampleNote={presentation.example_outcomes_note}
-                />
-              ) : null}
-              {section === 'forecast' ? (
-                <ForecastSection forecast={forecast} species={species} eggs={eggs} clutchSimulation={clutchSimulation} />
-              ) : null}
-              {section === 'inheritance' ? (
-                <InheritanceSection inherited={inherited} report={report} eggs={livingEggs} rbgiaTrace={rbgiaTrace} />
-              ) : null}
-              {section === 'complexity' && complexityReport ? (
-                <CombinedComplexitySection report={complexityReport} />
+            <PanelistProcessBrief
+              pair={pair}
+              gica={gica}
+              gicaScore={gicaScore}
+              rbgiaTrace={rbgiaTrace}
+              algorithm={algorithm}
+              forecast={forecast}
+              probabilities={enrichedProbabilities}
+              complexityReport={complexityReport}
+              species={species}
+              parentSnapshot={result?.parent_snapshot}
+              onOpen={handleSectionChange}
+            />
+            <SectionNav
+              ref={sectionNavRef}
+              section={section}
+              resultId={resultId}
+              onChange={handleSectionChange}
+              summary={runSummary}
+            />
+            <div id={SECTION_PANEL_ID} className="compute-process" aria-label="Full breeding process">
+              <CompatibilitySection result={result} />
+              <ComputationalFlowSection
+                pair={pair}
+                gica={gica}
+                gicaScore={gicaScore}
+                rbgiaTrace={rbgiaTrace}
+                algorithm={algorithm}
+                parentSnapshot={result?.parent_snapshot}
+              />
+              <InheritanceSection
+                inherited={inherited}
+                report={report}
+                eggs={livingEggs}
+                rbgiaTrace={rbgiaTrace}
+                probabilities={enrichedProbabilities}
+              />
+              <GeneticDistributionSection
+                probabilities={enrichedProbabilities}
+                eggs={livingEggs}
+                exampleNote={presentation.example_outcomes_note}
+                rbgiaTrace={rbgiaTrace}
+              />
+              <GicaSection result={result} gica={gica} gicaScore={gicaScore} rbgiaTrace={rbgiaTrace} />
+              <FinalSystemOutputSection
+                pair={pair}
+                species={species}
+                gica={gica}
+                gicaScore={gicaScore}
+                probabilities={enrichedProbabilities}
+                eggs={livingEggs}
+                confidence={confidence}
+                parentSnapshot={result?.parent_snapshot}
+              />
+              <ForecastSection forecast={forecast} species={species} eggs={eggs} clutchSimulation={clutchSimulation} />
+              {complexityReport ? (
+                <div id="process-complexity" className="compute-process__anchor">
+                  <CombinedComplexitySection report={complexityReport} />
+                </div>
               ) : null}
             </div>
           </>

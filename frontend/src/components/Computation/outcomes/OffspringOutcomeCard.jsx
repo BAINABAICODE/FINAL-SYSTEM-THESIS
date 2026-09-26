@@ -1,6 +1,7 @@
 import { GenotypeBadge, ModeBadge, ProbabilityBar, SexBadge } from '../shared/primitives'
 import { percentText } from '../shared/format'
 import { resolveInheritanceMode } from '../../../services/genetics'
+import PhenotypeMap from '../inheritance/PhenotypeMap'
 
 function LociGenotype({ genotype }) {
   const parts = String(genotype || '').split('|').map((s) => s.trim()).filter(Boolean)
@@ -83,6 +84,21 @@ export default function OffspringOutcomeCard({ row, rank }) {
           <dd>{geneticExplanation(row)}</dd>
         </div>
       </dl>
+      <PhenotypeMap
+        source={{
+          phenotype: row.phenotype,
+          baseColor: row.baseColor,
+          visualMutations: row.visualMutations,
+          eyes: row.eyes,
+          head: row.head,
+          neck: row.neck,
+          body: row.body,
+          wings: row.wings,
+          rump: row.rump,
+          tail: row.tail,
+          head_to_tail: row.head_to_tail || row.headToTail,
+        }}
+      />
       {row.phenotype ? <p className="gx-card__phenotype">{row.phenotype}</p> : null}
     </article>
   )

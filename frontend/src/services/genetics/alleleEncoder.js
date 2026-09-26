@@ -71,11 +71,82 @@ export function canonicalGenotypeKey(alleles) {
   return [...rest, ...w].join('/')
 }
 
+function locusHint(allele, locusName) {
+  if (locusName) return locusName
+  const symbol = String(allele || '').replace(/\+$/, '').trim()
+  return symbol || null
+}
+
+function shortLocus(locusName) {
+  if (!locusName) return null
+  const cut = String(locusName).split('(')[0].trim()
+  if (!cut) return String(locusName)
+  return cut.length > 28 ? `${cut.slice(0, 25)}…` : cut
+}
+
 export function describeAllele(allele, locusName) {
   const cls = alleleClass(allele)
-  if (cls === 'w') return { allele, kind: 'w', text: 'W chromosome (no Z-linked allele carried)' }
-  if (cls === 'wild') return { allele, kind: 'wild', text: `${allele} = wild-type allele${locusName ? ` at ${locusName}` : ''}` }
-  return { allele, kind: 'mutant', text: `${allele} = mutant allele${locusName ? ` for ${locusName}` : ''}` }
+  const locus = locusHint(allele, locusName)
+  if (cls === 'w') {
+    return {
+      allele,
+      kind: 'w',
+      kindLabel: 'W chromosome',
+      plain: 'No color gene on this side',
+      meaning: 'The hen’s W chromosome. It carries no Z-linked color gene, so a daughter shows only the Z she gets from the cock.',
+      text: 'W chromosome (no Z-linked allele carried)',
+    }
+  }
+  const short = shortLocus(locus)
+  if (cls === 'wild') {
+    return {
+      allele,
+      kind: 'wild',
+      kindLabel: 'Wild-type',
+      plain: short ? `Normal ${short}` : 'Normal (not the mutation)',
+      meaning: `${allele} is the wild-type (normal) allele${locus ? ` at ${locus}` : ''}. The + means this copy is not the mutation.`,
+      text: `${allele} = wild-type allele${locus ? ` at ${locus}` : ''}`,
+    }
+  }
+  return {
+    allele,
+    kind: 'mutant',
+    kindLabel: 'Mutation',
+    plain: short ? `${short} mutation` : `${allele} mutation`,
+    meaning: `${allele} is the mutant allele${locus ? ` for ${locus}` : ''}. The chick shows it only when the inheritance rule for this gene says it is expressed.`,
+    text: `${allele} = mutant allele${locus ? ` for ${locus}` : ''}`,
+  }
+}
+
+export function translateGenotype(genotype, locusName) {
+  const raw = String(genotype || '').trim()
+  if (!raw) return '—'
+  if (raw.includes('|')) {
+    return splitGeneticCode(raw).map((part) => translateGenotype(part, locusName)).join(' · ')
+  }
+  const parsed = parseGenotype(raw)
+  const alleles = parsed.alleles.length ? parsed.alleles : raw.split('/').map((part) => part.trim()).filter(Boolean)
+  if (!alleles.length) return '—'
+  return alleles.map((item) => describeAllele(item, locusName).plain).join(' × ')
+}
+
+export function collectAlleleGlossary(loci = []) {
+  const seen = new Map()
+  loci.forEach((locus) => {
+    const alleles = [
+      ...(locus.alleles?.cock || []),
+      ...(locus.alleles?.hen || []),
+      ...(locus.parents?.cock?.alleles || []),
+      ...(locus.parents?.hen?.alleles || []),
+    ]
+    alleles.forEach((allele) => {
+      if (!allele) return
+      const key = `${String(allele).trim()}::${locus.name || ''}`
+      if (seen.has(key)) return
+      seen.set(key, describeAllele(allele, locus.name))
+    })
+  })
+  return [...seen.values()]
 }
 
 /**

@@ -1,4 +1,4 @@
-import { alleleClass } from '../../../services/genetics'
+import { alleleClass, describeAllele } from '../../../services/genetics'
 import { percentText } from './format'
 
 export function ProbabilityBar({ probability, label, tone = 'brand', compact = false }) {
@@ -14,12 +14,22 @@ export function ProbabilityBar({ probability, label, tone = 'brand', compact = f
 }
 
 export function AlleleBadge({ allele, title }) {
+  const desc = describeAllele(allele)
   const cls = alleleClass(allele)
-  const kindLabel = cls === 'w' ? 'W chromosome' : cls === 'wild' ? 'wild-type allele' : 'mutant allele'
   return (
-    <span className={`gx-allele is-${cls}`} title={title || kindLabel}>
+    <span className={`gx-allele is-${cls}`} title={title || desc.meaning || desc.kindLabel}>
       <span className="gx-allele__symbol">{allele}</span>
       <span className="gx-allele__kind" aria-hidden="true">{cls === 'w' ? 'W' : cls === 'wild' ? '+' : 'm'}</span>
+    </span>
+  )
+}
+
+export function AllelePlain({ allele, locusName }) {
+  const desc = describeAllele(allele, locusName)
+  return (
+    <span className="gx-allele-plain">
+      <AlleleBadge allele={allele} title={desc.meaning} />
+      <span className="gx-allele-plain__text">{desc.plain}</span>
     </span>
   )
 }

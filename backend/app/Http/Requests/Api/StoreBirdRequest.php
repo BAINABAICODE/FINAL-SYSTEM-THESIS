@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Models\BaseColor;
 use App\Models\Bird;
+use App\Models\VisualMutation;
+use App\Support\MutationGroundApplicability;
 use App\Support\SplitGeneCatalog;
 use App\Support\VisualMutationCatalog;
 use Illuminate\Foundation\Http\FormRequest;
@@ -69,7 +72,9 @@ class StoreBirdRequest extends FormRequest
                 'required',
                 'string',
                 'max:80',
-                Rule::unique('birds', 'bird_id')->ignore($birdId),
+                Rule::unique('birds', 'bird_id')
+                    ->where(fn ($query) => $query->where('user_id', $this->user()?->id))
+                    ->ignore($birdId),
             ],
             'age_months' => ['required', 'integer', 'min:0', 'max:600'],
             'species_id' => ['required', 'integer', 'exists:lovebird_species,id'],
@@ -183,6 +188,12 @@ class StoreBirdRequest extends FormRequest
                 $this->input('visual_mutation_ids', []),
                 'visual_mutation_ids',
             );
+            $this->rejectInapplicableVisualMutations(
+                $validator,
+                $this->input('base_color_id'),
+                $this->input('visual_mutation_ids', []),
+                'visual_mutation_ids',
+            );
             $this->rejectInvalidSplitGenes(
                 $validator,
                 $this->input('species_id'),
@@ -208,6 +219,12 @@ class StoreBirdRequest extends FormRequest
                     $record['visual_mutation_ids'] ?? [],
                     "grandparents.{$role}.visual_mutation_ids",
                 );
+                $this->rejectInapplicableVisualMutations(
+                    $validator,
+                    $record['base_color_id'] ?? null,
+                    $record['visual_mutation_ids'] ?? [],
+                    "grandparents.{$role}.visual_mutation_ids",
+                );
                 $this->rejectInvalidSplitGenes(
                     $validator,
                     $record['species_id'] ?? null,
@@ -220,7 +237,6 @@ class StoreBirdRequest extends FormRequest
     }
 
     /**
-     * @param  mixed  $ids
      * @return list<int>
      */
     private function normalizeIdList(mixed $ids): array
@@ -240,10 +256,6 @@ class StoreBirdRequest extends FormRequest
         return array_values(array_unique($normalized));
     }
 
-    /**
-     * @param  mixed  $speciesId
-     * @param  mixed  $ids
-     */
     private function rejectInvalidVisualMutations(
         Validator $validator,
         mixed $speciesId,
@@ -267,10 +279,25 @@ class StoreBirdRequest extends FormRequest
         }
     }
 
-    /**
-     * @param  mixed  $speciesId
-     * @param  mixed  $ids
-     */
+    private function rejectInapplicableVisualMutations(
+        Validator $validator,
+        mixed $baseColorId,
+        mixed $ids,
+        string $field,
+    ): void {
+        $ids = $this->normalizeIdList($ids);
+        if ($ids === [] || $baseColorId === null || $baseColorId === '') {
+            return;
+        }
+
+        $color = BaseColor::query()->find((int) $baseColorId);
+        $mutations = VisualMutation::query()->whereIn('id', $ids)->get();
+        $message = MutationGroundApplicability::firstForMutations($color, $mutations);
+        if ($message !== null) {
+            $validator->errors()->add($field, $message);
+        }
+    }
+
     private function rejectInvalidSplitGenes(
         Validator $validator,
         mixed $speciesId,

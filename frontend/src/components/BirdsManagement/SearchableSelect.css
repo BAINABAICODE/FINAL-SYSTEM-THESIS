@@ -127,10 +127,24 @@
   cursor: pointer;
 }
 
-.search-select__option-label {
+.search-select__option-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
   min-width: 0;
   flex: 1 1 auto;
+}
+
+.search-select__option-label {
+  min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.search-select__option-note {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  font-weight: 500;
+  color: #6b564c;
 }
 
 .search-select__mark {
@@ -164,7 +178,7 @@
 
 .search-select__option.is-disabled,
 .search-select__option:disabled {
-  opacity: 0.45;
+  opacity: 0.72;
   cursor: not-allowed;
 }
 

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import api from '../../api/client'
 import { getSpeciesFormPreview } from '../../assets/species-form/index.js'
 import SearchableSelect from '../BirdsManagement/SearchableSelect.jsx'
+import { keepApplicableMutationIds, visualBlockReason } from '../../services/genetics/mutationGroundApplicability.js'
 import './BreedingWorkflow.css'
 
 const STATUS_LABELS = {
@@ -30,7 +31,7 @@ const HINTS = {
   sex: 'Choose Cock (Male) or Hen (Female). A pair needs one of each, and sex-linked genes depend on this field.',
   age: 'Select age in months. A breeding bird should be at least 10 to 12 months old. Age is used for breeding-safety checks, not Mendelian math.',
   baseColor: 'Pick the documented ground color. RBGIA uses this to calculate how color is inherited.',
-  visual: 'Pick mutations the bird actually shows. These become the visible traits in the offspring forecast.',
+  visual: 'Pick mutations the bird actually shows. A face mutation stays disabled on blue, and Violet stays disabled with Ino.',
   split: 'Pick hidden or split genes the bird carries but may not show. These can still appear in chicks.',
   grandparents: 'Optional. Add grandparents only if you have them. They help flag close relationships and extra genetic context.',
   select: 'Load a saved bird from Birds Management. The form fills automatically so you do not retype the profile.',
@@ -480,7 +481,15 @@ function geneticIssues(parent, catalogs) {
       fields.visual_mutation_ids = 'This visual mutation is not documented for the selected species.'
       messages.push(fields.visual_mutation_ids)
     } else {
-      const conflict = selected.find((candidate, index) =>
+      const color = parent.base_color_id
+        ? selectedById(forSpecies(catalogs.baseColors, parent.species_id), [parent.base_color_id])[0]
+        : null
+      const blocked = selected.map((mutation) => visualBlockReason(color, mutation, selected)).find(Boolean)
+      if (blocked) {
+        fields.visual_mutation_ids = blocked
+        messages.push(blocked)
+      }
+      const conflict = blocked ? null : selected.find((candidate, index) =>
         selected.slice(index + 1).some((other) => {
           if (candidate.dosage_key && other.dosage_key && candidate.dosage_key === other.dosage_key) return true
           if (candidate.locus_key && other.locus_key && candidate.locus_key === other.locus_key) {
@@ -948,9 +957,15 @@ function ParentForm({
           placeholder="Select species"
           searchPlaceholder="Search species…"
           onChange={(next) => {
-            const stillColor = forSpecies(baseColors, next).some((item) => String(item.id) === String(parent.base_color_id))
-            const mutationIds = (parent.visual_mutation_ids || []).filter((id) =>
-              forSpecies(visualMutations, next).some((item) => String(item.id) === String(id)),
+            const nextColors = forSpecies(baseColors, next)
+            const nextColor = nextColors.find((item) => String(item.id) === String(parent.base_color_id)) || null
+            const nextMutations = forSpecies(visualMutations, next)
+            const mutationIds = keepApplicableMutationIds(
+              (parent.visual_mutation_ids || []).filter((id) =>
+                nextMutations.some((item) => String(item.id) === String(id)),
+              ),
+              nextMutations,
+              nextColor,
             )
             const geneIds = (parent.split_gene_ids || []).filter((id) =>
               genesForParent(splitGenes, next, parent.sex).some((item) => String(item.id) === String(id)),
@@ -958,7 +973,7 @@ function ParentForm({
             onChange({
               ...parent,
               species_id: next,
-              base_color_id: stillColor ? parent.base_color_id : null,
+              base_color_id: nextColor ? parent.base_color_id : null,
               visual_mutation_ids: mutationIds,
               split_gene_ids: geneIds,
             }, 'species_id')
@@ -1011,7 +1026,11 @@ function ParentForm({
           emptyLabel="None"
           disabled={!parent.species_id}
           searchPlaceholder={parent.species_id ? 'Search base colors…' : 'Select a species first'}
-          onChange={(next) => patch('base_color_id', next)}
+          onChange={(next) => {
+            const color = colors.find((item) => String(item.id) === String(next)) || null
+            const mutationIds = keepApplicableMutationIds(parent.visual_mutation_ids, mutations, color)
+            patch('base_color_id', next, { visual_mutation_ids: mutationIds })
+          }}
         />
 
         <SearchableSelect
@@ -1030,6 +1049,22 @@ function ParentForm({
           emptyLabel="None"
           disabled={!parent.species_id}
           searchPlaceholder={parent.species_id ? 'Search mutations…' : 'Select a species first'}
+          isOptionDisabled={(option) => {
+            const color = colors.find((item) => String(item.id) === String(parent.base_color_id)) || null
+            const selected = mutations.filter((item) =>
+              (parent.visual_mutation_ids || []).some((id) => String(id) === String(item.id)),
+            )
+            const ground = visualBlockReason(color, option, selected)
+            if (ground) return ground
+            return selected.some((current) => {
+              if (String(current.id) === String(option.id)) return false
+              if (option.dosage_key && current.dosage_key && option.dosage_key === current.dosage_key) return true
+              if (option.locus_key && current.locus_key && option.locus_key === current.locus_key) {
+                return !isDocumentedCombination(option, current)
+              }
+              return false
+            })
+          }}
           onChange={(next) => patch('visual_mutation_ids', next)}
         />
 

@@ -3,20 +3,22 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\AnalyzeBreedingRequest;
 use App\Models\BaseColor;
 use App\Models\Bird;
-use App\Models\BreedingPrediction;
 use App\Models\BirdGrandparent;
+use App\Models\BreedingPrediction;
 use App\Models\LovebirdSpecies;
 use App\Models\SpeciesBreedingCompatibility;
 use App\Models\SplitGene;
 use App\Models\VisualMutation;
-use App\Http\Requests\Api\AnalyzeBreedingRequest;
 use App\Services\Breeding\BreedingAnalysisService;
 use App\Services\Breeding\BreedingPairValidator;
 use App\Services\Breeding\RbgiaPredictor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 
 class BreedingController extends Controller
 {
@@ -132,8 +134,8 @@ class BreedingController extends Controller
         }
 
         $validated = $request->validate([
-            'parent_1_id' => ['required', 'integer', 'exists:birds,id'],
-            'parent_2_id' => ['required', 'integer', 'exists:birds,id'],
+            'parent_1_id' => ['required', 'integer', Rule::exists('birds', 'id')->where(fn ($query) => $query->where('user_id', $request->user()?->id))],
+            'parent_2_id' => ['required', 'integer', Rule::exists('birds', 'id')->where(fn ($query) => $query->where('user_id', $request->user()?->id))],
         ]);
 
         $with = [
@@ -194,8 +196,7 @@ class BreedingController extends Controller
     }
 
     /**
-     * @param  mixed  $grandparents
-     * @return \Illuminate\Support\Collection<int, BirdGrandparent>
+     * @return Collection<int, BirdGrandparent>
      */
     private function hydrateGrandparents(mixed $grandparents)
     {

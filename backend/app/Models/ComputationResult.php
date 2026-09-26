@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToAccount;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ComputationResult extends Model
 {
+    use BelongsToAccount;
+
     protected $fillable = [
         'bird_pair_id',
         'prediction_id',

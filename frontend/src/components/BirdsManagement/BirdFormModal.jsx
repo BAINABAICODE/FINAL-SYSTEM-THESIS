@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from 'react'
 import SearchableSelect from './SearchableSelect.jsx'
 import { getSpeciesFormPreview } from '../../assets/species-form/index.js'
+import { keepApplicableMutationIds, visualBlockReason } from '../../services/genetics/mutationGroundApplicability.js'
 import './BirdFormModal.css'
 
 const SEX_OPTIONS = [
@@ -174,6 +175,16 @@ function isDocumentedCombination(left, right) {
   return leftNames.includes(right.name) || rightNames.includes(left.name)
 }
 
+function colorForSelection(baseColors, speciesId, baseColorId) {
+  return colorsForSpecies(baseColors, speciesId).find((color) => String(color.id) === String(baseColorId)) || null
+}
+
+function visualMutationBlock(option, selected, baseColor) {
+  const ground = visualBlockReason(baseColor, option, selected)
+  if (ground) return ground
+  return mutationConflicts(option, selected)
+}
+
 function mutationConflicts(candidate, selected) {
   if (!candidate || !selected?.length) return false
 
@@ -209,25 +220,25 @@ function GrandparentFields({
           label="Species"
           options={speciesOptions}
           value={value.species_id}
-          onChange={(next) =>
+          onChange={(next) => {
+            const stillColor = colorsForSpecies(baseColors, next).some(
+              (color) => String(color.id) === String(value.base_color_id),
+            )
+            const mutationIds = keepApplicableMutationIds(
+              keepMutationIdsForSpecies(value.visual_mutation_ids, visualMutations, next),
+              mutationsForSpecies(visualMutations, next),
+              stillColor ? colorForSelection(baseColors, next, value.base_color_id) : null,
+            )
             onChange({
               ...value,
               species_id: next,
-              base_color_id: colorsForSpecies(baseColors, next).some(
-                (color) => String(color.id) === String(value.base_color_id),
-              )
-                ? value.base_color_id
-                : null,
-              visual_mutation_ids: keepMutationIdsForSpecies(
-                value.visual_mutation_ids,
-                visualMutations,
-                next,
-              ),
-              visual_mutation_id: null,
+              base_color_id: stillColor ? value.base_color_id : null,
+              visual_mutation_ids: mutationIds,
+              visual_mutation_id: mutationIds[0] ?? null,
               split_gene_ids: keepGeneIds(value.split_gene_ids, splitGenes, next, sex),
               split_gene_id: null,
             })
-          }
+          }}
           getOptionLabel={speciesLabel}
           getOptionValue={(option) => option.id}
           getOptionPreview={(option) => getSpeciesFormPreview(option, null)}
@@ -241,7 +252,17 @@ function GrandparentFields({
           label="Base Color"
           options={colorsForSpecies(baseColors, value.species_id)}
           value={value.base_color_id}
-          onChange={(next) => onChange({ ...value, base_color_id: next })}
+          onChange={(next) => {
+            const color = colorForSelection(baseColors, value.species_id, next)
+            const mutations = mutationsForSpecies(visualMutations, value.species_id)
+            const mutationIds = keepApplicableMutationIds(value.visual_mutation_ids, mutations, color)
+            onChange({
+              ...value,
+              base_color_id: next,
+              visual_mutation_ids: mutationIds,
+              visual_mutation_id: mutationIds[0] ?? null,
+            })
+          }}
           allowEmpty
           emptyLabel="None"
           searchPlaceholder="Search base colors…"
@@ -261,11 +282,12 @@ function GrandparentFields({
             })
           }
           isOptionDisabled={(option) =>
-            mutationConflicts(
+            visualMutationBlock(
               option,
               mutationsForSpecies(visualMutations, value.species_id).filter((item) =>
                 (value.visual_mutation_ids || []).some((id) => String(id) === String(item.id)),
               ),
+              colorForSelection(baseColors, value.species_id, value.base_color_id),
             )
           }
           allowEmpty
@@ -521,10 +543,11 @@ export default function BirdFormModal({
                     const stillValid = colorsForSpecies(baseColors, next).some(
                       (color) => String(color.id) === String(form.base_color_id),
                     )
-                    const mutationIds = keepMutationIdsForSpecies(
-                      form.visual_mutation_ids,
-                      visualMutations,
-                      next,
+                    const speciesMutations = mutationsForSpecies(visualMutations, next)
+                    const mutationIds = keepApplicableMutationIds(
+                      keepMutationIdsForSpecies(form.visual_mutation_ids, visualMutations, next),
+                      speciesMutations,
+                      stillValid ? colorForSelection(baseColors, next, form.base_color_id) : null,
                     )
                     const geneIds = keepGeneIds(form.split_gene_ids, splitGenes, next, form.sex)
                     setForm((prev) => ({
@@ -580,7 +603,17 @@ export default function BirdFormModal({
                   label="Base Color"
                   options={colorsForSpecies(baseColors, form.species_id)}
                   value={form.base_color_id}
-                  onChange={(next) => updateField('base_color_id', next)}
+                  onChange={(next) => {
+                    const color = colorForSelection(baseColors, form.species_id, next)
+                    const mutations = mutationsForSpecies(visualMutations, form.species_id)
+                    const mutationIds = keepApplicableMutationIds(form.visual_mutation_ids, mutations, color)
+                    setForm((prev) => ({
+                      ...prev,
+                      base_color_id: next,
+                      visual_mutation_ids: mutationIds,
+                      visual_mutation_id: mutationIds[0] ?? null,
+                    }))
+                  }}
                   allowEmpty
                   emptyLabel="None"
                   searchPlaceholder="Search base colors…"
@@ -601,11 +634,12 @@ export default function BirdFormModal({
                     }))
                   }}
                   isOptionDisabled={(option) =>
-                    mutationConflicts(
+                    visualMutationBlock(
                       option,
                       mutationsForSpecies(visualMutations, form.species_id).filter((item) =>
                         form.visual_mutation_ids.some((id) => String(id) === String(item.id)),
                       ),
+                      colorForSelection(baseColors, form.species_id, form.base_color_id),
                     )
                   }
                   allowEmpty

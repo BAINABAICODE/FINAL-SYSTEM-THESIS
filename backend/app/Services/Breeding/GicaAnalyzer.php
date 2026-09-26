@@ -266,6 +266,7 @@ class GicaAnalyzer
         $mutationErrors = $errors->filter(fn ($item) => is_array($item) && in_array($item['code'] ?? '', [
             'invalid_visual_mutation',
             'invalid_mutation_combination',
+            'inapplicable_visual_mutation',
             'invalid_split_gene',
             'invalid_base_color',
         ], true));

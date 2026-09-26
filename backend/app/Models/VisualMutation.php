@@ -51,4 +51,9 @@ class VisualMutation extends Model
     {
         return $this->belongsToMany(Bird::class, 'bird_visual_mutation');
     }
+
+    public function headToTail(): HasMany
+    {
+        return $this->hasMany(HeadToTailPhenotype::class);
+    }
 }

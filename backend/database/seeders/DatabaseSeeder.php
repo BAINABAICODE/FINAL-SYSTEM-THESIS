@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             InheritanceModeSeeder::class,
             BaseColorSeeder::class,
             VisualMutationSeeder::class,
+            HeadToTailPhenotypeSeeder::class,
             SplitGeneSeeder::class,
             SpeciesBreedingCompatibilitySeeder::class,
             BreedingSafetyRuleSeeder::class,

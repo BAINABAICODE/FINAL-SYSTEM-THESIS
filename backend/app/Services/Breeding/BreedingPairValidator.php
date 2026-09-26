@@ -6,6 +6,7 @@ use App\Models\Bird;
 use App\Models\BreedingSafetyRule;
 use App\Models\SpeciesBreedingCompatibility;
 use App\Support\BaseColorCatalog;
+use App\Support\MutationGroundApplicability;
 use App\Support\SplitGeneCatalog;
 use App\Support\VisualMutationCatalog;
 use Illuminate\Support\Collection;
@@ -265,6 +266,15 @@ class BreedingPairValidator
                     $speciesMismatch
                         ? "{$label}: This visual mutation is not documented for the selected species."
                         : "{$label}: This mutation combination has not been validated for this species and cannot be used for a definitive prediction.",
+                );
+            }
+
+            $groundMessage = MutationGroundApplicability::firstForMutations($bird->baseColor, $bird->visualMutations);
+            if ($groundMessage) {
+                $findings[] = $this->finding(
+                    'error',
+                    'inapplicable_visual_mutation',
+                    "{$label}: {$groundMessage}",
                 );
             }
         }

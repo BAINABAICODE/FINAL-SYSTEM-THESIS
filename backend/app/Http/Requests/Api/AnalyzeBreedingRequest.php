@@ -31,7 +31,11 @@ class AnalyzeBreedingRequest extends FormRequest
     {
         $rules = [
             $key => ['required', 'array'],
-            "{$key}.source_bird_id" => ['nullable', 'integer', 'exists:birds,id'],
+            "{$key}.source_bird_id" => [
+                'nullable',
+                'integer',
+                Rule::exists('birds', 'id')->where(fn ($query) => $query->where('user_id', $this->user()?->id)),
+            ],
             "{$key}.bird_id" => ['required', 'string', 'max:80'],
             "{$key}.species_id" => ['required', 'integer', 'exists:lovebird_species,id'],
             "{$key}.sex" => ['required', 'string', Rule::in([Bird::SEX_HEN, Bird::SEX_COCK])],

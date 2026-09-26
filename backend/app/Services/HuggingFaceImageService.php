@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ChickOutcomeImage;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -96,7 +97,7 @@ class HuggingFaceImageService
             $url = Storage::disk('public')->url($path);
 
             ChickOutcomeImage::query()->updateOrCreate(
-                ['signature' => $signature],
+                ['signature' => $signature, 'user_id' => auth()->id()],
                 [
                     'egg_number' => is_numeric($genetic['egg_number']) ? (int) $genetic['egg_number'] : null,
                     'species' => $genetic['species'],
@@ -328,6 +329,7 @@ class HuggingFaceImageService
 
             if (! $response->successful()) {
                 $lastError = '['.$attempt['provider'].'] '.($this->extractApiError($response->body()) ?: ('HTTP '.$response->status()));
+
                 continue;
             }
 
@@ -561,7 +563,7 @@ class HuggingFaceImageService
      * HTTP client with an explicit CA bundle so HTTPS verification works even when
      * php.ini has no curl.cainfo (common on Windows → "cURL error 60").
      */
-    private function http(): \Illuminate\Http\Client\PendingRequest
+    private function http(): PendingRequest
     {
         $bundle = $this->caBundlePath();
 
@@ -606,7 +608,8 @@ class HuggingFaceImageService
     private function storeImage(string $binary, int|string|null $eggNumber): string
     {
         $safeEgg = preg_replace('/[^0-9A-Za-z_-]/', '', (string) ($eggNumber ?? 'x')) ?: 'x';
-        $path = 'chicks/chick_'.$safeEgg.'_'.Str::lower(Str::random(12)).'.png';
+        $owner = auth()->id() ?? 'account';
+        $path = 'chicks/'.$owner.'/chick_'.$safeEgg.'_'.Str::lower(Str::random(12)).'.png';
         if (! Storage::disk('public')->put($path, $binary)) {
             throw new \RuntimeException('Failed to save the generated chick image to storage.');
         }
@@ -681,7 +684,6 @@ class HuggingFaceImageService
     }
 
     /**
-     * @param  mixed  $items
      * @return list<string>
      */
     private function nameList(mixed $items): array

@@ -1,20 +1,33 @@
 import { useEffect, useState } from 'react'
+import { useAuth } from '../../auth/AuthContext'
 import agaporaIcon from '../../assets/icons/AGAPORA-icon.png'
 import './Navbar.css'
 
 const DESKTOP_BREAKPOINT = 1060
+const SIGNED_IN_DESKTOP_BREAKPOINT = 1360
 
-const links = [
+const publicLinks = [
   { label: 'Home', href: '#home', route: 'home' },
   { label: 'About', href: '#about', route: 'about' },
   { label: 'Help', href: '#help', route: 'help' },
-  { label: 'Birds', href: '#birds', route: 'birds' },
-  { label: 'Computation History', href: '#computation-history', route: 'history' },
 ]
 
+const privateLinks = [
+  { label: 'Birds', href: '#birds', route: 'birds' },
+  { label: 'History', href: '#computation-history', route: 'history' },
+]
+
+function accountInitial(name) {
+  const trimmed = String(name ?? '').trim()
+  return trimmed ? trimmed.charAt(0).toUpperCase() : 'A'
+}
+
 export default function Navbar({ activeRoute = 'home' }) {
+  const { status, user, logout } = useAuth()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const isAuthenticated = status === 'authenticated'
+  const links = isAuthenticated ? [...publicLinks, ...privateLinks] : publicLinks
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 12)
@@ -24,12 +37,14 @@ export default function Navbar({ activeRoute = 'home' }) {
   }, [])
 
   useEffect(() => {
+    const desktopBreakpoint = isAuthenticated ? SIGNED_IN_DESKTOP_BREAKPOINT : DESKTOP_BREAKPOINT
     const handleResize = () => {
-      if (window.innerWidth >= DESKTOP_BREAKPOINT) setMenuOpen(false)
+      if (window.innerWidth >= desktopBreakpoint) setMenuOpen(false)
     }
+    handleResize()
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [])
+  }, [isAuthenticated])
 
   useEffect(() => {
     if (!menuOpen) return undefined
@@ -42,16 +57,22 @@ export default function Navbar({ activeRoute = 'home' }) {
 
   const handleCloseMenu = () => setMenuOpen(false)
   const handleToggleMenu = () => setMenuOpen((open) => !open)
+  const handleLogout = () => {
+    handleCloseMenu()
+    logout()
+  }
 
   const isDark =
     activeRoute === 'home' ||
+    activeRoute === 'login' ||
+    activeRoute === 'register' ||
     activeRoute === 'birds' ||
     activeRoute === 'history' ||
     activeRoute === 'breeding'
 
   return (
     <header
-      className={`navbar${isDark ? ' navbar--dark' : ''}${scrolled ? ' is-scrolled' : ''}${menuOpen ? ' is-open' : ''}`}
+      className={`navbar${isDark ? ' navbar--dark' : ''}${isAuthenticated ? ' navbar--signed-in' : ''}${scrolled ? ' is-scrolled' : ''}${menuOpen ? ' is-open' : ''}`}
     >
       <div className="navbar__inner">
         <a className="navbar__brand" href="#home" onClick={handleCloseMenu} aria-label="AGAPORA home">
@@ -77,16 +98,38 @@ export default function Navbar({ activeRoute = 'home' }) {
             ))}
           </ul>
 
-          <a
-            className={`navbar__cta${activeRoute === 'breeding' ? ' is-active' : ''}`}
-            href="#breeding"
-            onClick={handleCloseMenu}
-          >
-            Start Breeding
-            <span className="navbar__cta-arrow" aria-hidden="true">
-              →
-            </span>
-          </a>
+          {status === 'loading' ? null : (
+            <a
+              className={`navbar__cta${activeRoute === 'breeding' ? ' is-active' : ''}`}
+              href={isAuthenticated ? '#breeding' : '#login'}
+              onClick={handleCloseMenu}
+            >
+              {isAuthenticated ? 'Start Breeding' : 'Sign in'}
+              <span className="navbar__cta-arrow" aria-hidden="true">
+                →
+              </span>
+            </a>
+          )}
+
+          {status === 'loading' ? null : (
+            <div className="navbar__account">
+              {isAuthenticated ? (
+                <>
+                  <span className="navbar__avatar" aria-hidden="true">
+                    {accountInitial(user?.name)}
+                  </span>
+                  <span className="navbar__user">{user?.name}</span>
+                  <button type="button" className="navbar__logout" onClick={handleLogout}>
+                    Log out
+                  </button>
+                </>
+              ) : (
+                <a className="navbar__link" href="#register" onClick={handleCloseMenu}>
+                  Register
+                </a>
+              )}
+            </div>
+          )}
         </nav>
 
         <button

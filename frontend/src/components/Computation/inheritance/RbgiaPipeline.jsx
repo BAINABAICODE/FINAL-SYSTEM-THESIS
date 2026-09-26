@@ -8,11 +8,11 @@ import PhenotypeMapping from './PhenotypeMapping'
 import FormulaTrace from './FormulaTrace'
 
 const STAGES = [
-  { id: 'F1', title: 'Allele encoding', Component: AlleleEncoding },
-  { id: 'F2', title: 'Gamete formation', Component: GameteFormation },
-  { id: 'F3', title: 'Punnett computation', Component: PunnettSquare },
-  { id: 'F4', title: 'Phenotype mapping', Component: PhenotypeMapping },
-  { id: 'F5', title: 'Probability aggregation', Component: FormulaTrace },
+  { id: 'F1', title: 'Translate parent alleles', hint: 'What each stored code means', Component: AlleleEncoding },
+  { id: 'F2', title: 'What each parent can pass on', hint: 'Gametes — one allele each', Component: GameteFormation },
+  { id: 'F3', title: 'Punnett square', hint: 'Every possible chick for this gene', Component: PunnettSquare },
+  { id: 'F4', title: 'What the chick will look like', hint: 'Genotype → visible result', Component: PhenotypeMapping },
+  { id: 'F5', title: 'Add up the odds', hint: 'Same boxes are grouped and counted', Component: FormulaTrace },
 ]
 
 export default function RbgiaPipeline({ loci }) {
@@ -23,8 +23,12 @@ export default function RbgiaPipeline({ loci }) {
   return (
     <div className="gx-pipeline">
       <ol className="gx-pipeline__flow" aria-label="RBGIA data flow">
-        {PIPELINE_STEPS.map((step) => <li key={step}>{step}</li>)}
+        {STAGES.map((step) => <li key={step.id}>{step.id} {step.title}</li>)}
       </ol>
+      <p className="gx-pipeline__read">
+        Pick a gene below. The same five steps run for every stored locus: encode → pass on → Punnett → looks → odds.
+        Full engine path ({PIPELINE_STEPS.length} steps) stays available in the trace.
+      </p>
 
       <div className="gx-pipeline__loci" role="tablist" aria-label="Loci processed by RBGIA">
         {loci.map((locus) => (
@@ -57,9 +61,15 @@ export default function RbgiaPipeline({ loci }) {
             {active.provisional ? <StatusPill tone="warn">provisional</StatusPill> : null}
           </div>
         </header>
-        {STAGES.map(({ id, title, Component }) => (
+        {STAGES.map(({ id, title, hint, Component }) => (
           <section key={id} className="gx-stage">
-            <h5 className="gx-stage__title"><span className="gx-stage__id">{id}</span> {title}</h5>
+            <h5 className="gx-stage__title">
+              <span className="gx-stage__id">{id}</span>
+              <span>
+                {title}
+                {hint ? <small className="gx-stage__hint">{hint}</small> : null}
+              </span>
+            </h5>
             <Component locus={active} />
           </section>
         ))}

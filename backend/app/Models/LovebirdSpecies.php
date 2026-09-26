@@ -34,4 +34,14 @@ class LovebirdSpecies extends Model
     {
         return $this->hasMany(Bird::class, 'species_id');
     }
+
+    public function visualMutations(): HasMany
+    {
+        return $this->hasMany(VisualMutation::class, 'lovebird_species_id');
+    }
+
+    public function headToTailIdentity(): HasMany
+    {
+        return $this->hasMany(HeadToTailPhenotype::class, 'lovebird_species_id');
+    }
 }
